@@ -1,0 +1,167 @@
+.ca-wrapper {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #fdf5f5 0%, #f0e0e0 100%);
+  display: flex;
+  flex-direction: column;
+}
+
+.ca-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px 48px;
+}
+
+.ca-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
+  padding: 40px 38px;
+  width: 100%;
+  max-width: 500px;
+  border-top: 4px solid #8B0000;
+  height: fit-content;
+}
+
+.ca-title {
+  color: #8B0000;
+  font-weight: 700;
+  font-size: 1.75rem;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ca-subtitle {
+  color: #bbb;
+  font-size: 0.83rem;
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+/* Step Tracker */
+.step-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-bubble {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e8e8e8;
+  color: #999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.88rem;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.step-bubble.done {
+  background: #8B0000;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.2);
+}
+
+.step-bar {
+  flex: 1;
+  max-width: 80px;
+  height: 3px;
+  background: #e8e8e8;
+  transition: background 0.3s ease;
+}
+
+.step-bar.done { background: #8B0000; }
+
+.step-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: #aaa;
+}
+
+/* Labels & inputs */
+.q2p-label {
+  display: block;
+  font-weight: 600;
+  color: #5c0000;
+  font-size: 0.88rem;
+  margin-bottom: 5px;
+}
+
+.req { color: #c0392b; }
+
+.q2p-input:focus {
+  border-color: #8B0000 !important;
+  box-shadow: 0 0 0 0.2rem rgba(139, 0, 0, 0.15) !important;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background-color: #f8f5f5;
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.auto-email {
+  background: #f5efef !important;
+  color: #5c0000 !important;
+  font-weight: 600;
+  cursor: default;
+  border-color: #e8d0d0 !important;
+}
+
+/* OTP Box */
+.otp-box {
+  background: #fff8f8;
+  border: 1.5px dashed #8B0000;
+  border-radius: 10px;
+  padding: 14px 14px 10px;
+}
+
+.otp-input {
+  letter-spacing: 8px;
+  font-size: 1.3rem !important;
+}
+
+/* Buttons */
+.q2p-btn-primary {
+  background-color: #8B0000;
+  border-color: #8B0000;
+  color: #fff;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.q2p-btn-primary:hover:not(:disabled) {
+  background-color: #5c0000;
+  border-color: #5c0000;
+  color: #fff;
+}
+.q2p-btn-primary:disabled { opacity: 0.6; color: #fff; }
+
+.q2p-btn-outline {
+  border: 2px solid #8B0000;
+  color: #8B0000;
+  font-weight: 600;
+  background: transparent;
+  transition: all 0.2s;
+}
+.q2p-btn-outline:hover {
+  background-color: #8B0000;
+  color: #fff;
+}
+
+.eye-btn {
+  border: 1px solid #dee2e6;
+  border-left: 0;
+  background: #fafafa;
+  color: #555;
+}
+.eye-btn:hover:not(:disabled) { color: #8B0000; background: #f5efef; }
+
+@media (max-width: 480px) {
+  .ca-card { padding: 24px 16px; }
+}

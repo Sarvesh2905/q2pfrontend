@@ -1,0 +1,190 @@
+.dash-page {
+  min-height: 100vh;
+  background: #f9f5f5;
+}
+
+.dash-body {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 28px 20px 56px;
+}
+
+/* ── Welcome Banner ── */
+.welcome-banner {
+  background: linear-gradient(135deg, #8B0000 0%, #5c0000 100%);
+  border-radius: 16px;
+  padding: 26px 30px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 8px 30px rgba(139, 0, 0, 0.22);
+  margin-bottom: 32px;
+  color: #fff;
+}
+
+.banner-icon-wrap {
+  font-size: 3rem;
+  line-height: 1;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.banner-heading {
+  font-size: 1.55rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: #fff;
+}
+
+.name-hl { color: #ffd6d6; }
+
+.banner-sub {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #f5c5c5;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.role-pill {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  padding: 2px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.banner-divider { opacity: 0.4; font-size: 1.1rem; }
+
+/* ── Section Header ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  color: #5c0000;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 16px;
+  gap: 6px;
+}
+
+.module-count {
+  margin-left: auto;
+  background: #f0e0e0;
+  color: #8B0000;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 12px;
+  border-radius: 20px;
+}
+
+/* ── Module Cards ── */
+.mod-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 12px rgba(139, 0, 0, 0.07);
+  border: 1.5px solid #f0e8e8;
+  transition: all 0.22s ease;
+  position: relative;
+  min-height: 96px;
+}
+
+.mod-active {
+  border-color: #dcc0c0;
+  cursor: pointer;
+}
+
+.mod-active:hover {
+  box-shadow: 0 8px 28px rgba(139, 0, 0, 0.16);
+  transform: translateY(-3px);
+  border-color: var(--mod-color, #8B0000);
+}
+
+.mod-disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+}
+
+/* Number badge */
+.mod-number {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #ccc;
+  letter-spacing: 0.5px;
+}
+
+/* Icon box */
+.mod-icon-wrap {
+  width: 54px;
+  height: 54px;
+  border-radius: 13px;
+  background: #bbb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.mod-info {
+  flex: 1;
+  margin-top: 6px;
+}
+
+.mod-label {
+  font-weight: 700;
+  color: #2c0000;
+  margin-bottom: 3px;
+  font-size: 0.96rem;
+}
+
+.mod-desc {
+  color: #aaa;
+  font-size: 0.76rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.mod-go {
+  font-size: 1.5rem;
+  color: #8B0000;
+  opacity: 0.65;
+  transition: opacity 0.2s;
+}
+
+.mod-active:hover .mod-go { opacity: 1; }
+
+.soon-badge {
+  background: #f4f4f4;
+  color: #aaa;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 576px) {
+  .welcome-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 20px;
+  }
+  .banner-icon-wrap { display: none; }
+  .banner-heading   { font-size: 1.2rem; }
+  .mod-card         { padding: 16px 14px; }
+}
