@@ -15,7 +15,7 @@ import UsersDept from "./pages/Masters/UsersDept/UsersDept";
 import SalesContact from "./pages/Masters/SalesContact/SalesContact";
 import Customer from "./pages/Masters/Customer/Customer";
 import Buyer from './pages/Masters/Buyer/Buyer';
-
+import Country from "./pages/Masters/Country/Country";
 
 function App() {
   return (
@@ -26,34 +26,71 @@ function App() {
           <Route path="/" element={<Navigate to="/login" replace />} />
 
           {/* Public routes */}
-          <Route path="/login"          element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/create-account" element={<CreateAccount />} />
 
           {/* Protected routes */}
-          <Route path="/dashboard" element={
-            <ProtectedRoute><Dashboard /></ProtectedRoute>
-          } />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/masters" element={
-            <ProtectedRoute><Masters /></ProtectedRoute>
-          } />
+          <Route
+            path="/masters"
+            element={
+              <ProtectedRoute>
+                <Masters />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/masters/users-dept" element={
-            <ProtectedRoute><UsersDept /></ProtectedRoute>
-          } />
+          <Route
+            path="/masters/users-dept"
+            element={
+              <ProtectedRoute>
+                <UsersDept />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/masters/sales-contact" element={
-            <ProtectedRoute><SalesContact /></ProtectedRoute>
-          } />
+          <Route
+            path="/masters/sales-contact"
+            element={
+              <ProtectedRoute>
+                <SalesContact />
+              </ProtectedRoute>
+            }
+          />
 
-          <Route path="/masters/customer" element={
-            <ProtectedRoute><Customer /></ProtectedRoute>
-          } />
+          <Route
+            path="/masters/customer"
+            element={
+              <ProtectedRoute>
+                <Customer />
+              </ProtectedRoute>
+            }
+          />
 
-<Route path="/masters/buyer" element={
-  <ProtectedRoute><Buyer /></ProtectedRoute>
-} />
-
+          <Route
+            path="/masters/buyer"
+            element={
+              <ProtectedRoute>
+                <Buyer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/country"
+            element={
+              <ProtectedRoute>
+                <Country />
+              </ProtectedRoute>
+            }
+          />
           {/* Future module routes */}
           {/* <Route path="/masters/buyer"            element={<ProtectedRoute><Buyer /></ProtectedRoute>} /> */}
           {/* <Route path="/masters/country"          element={<ProtectedRoute><Country /></ProtectedRoute>} /> */}
