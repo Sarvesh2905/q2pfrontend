@@ -16,6 +16,14 @@ import SalesContact from "./pages/Masters/SalesContact/SalesContact";
 import Customer from "./pages/Masters/Customer/Customer";
 import Buyer from './pages/Masters/Buyer/Buyer';
 import Country from "./pages/Masters/Country/Country";
+import Product from './pages/Masters/Product/Product';
+import Price from './pages/Masters/Price/Price';
+import GEReference from './pages/Masters/GEReference/GEReference';
+import Discount from './pages/Masters/Discount/Discount';
+
+
+
+
 
 function App() {
   return (
@@ -91,6 +99,11 @@ function App() {
               </ProtectedRoute>
             }
           />
+          
+          <Route path="/masters/product" element={<ProtectedRoute><Product /></ProtectedRoute>} />
+          <Route path="/masters/price" element={<ProtectedRoute><Price /></ProtectedRoute>} />
+          <Route path="/masters/ge-reference" element={<ProtectedRoute><GEReference /></ProtectedRoute>} />
+          <Route path="/masters/discount" element={<ProtectedRoute><Discount /></ProtectedRoute>} />
           {/* Future module routes */}
           {/* <Route path="/masters/buyer"            element={<ProtectedRoute><Buyer /></ProtectedRoute>} /> */}
           {/* <Route path="/masters/country"          element={<ProtectedRoute><Country /></ProtectedRoute>} /> */}

@@ -7,14 +7,13 @@ import "./Masters.css";
 const Masters = () => {
   const navigate = useNavigate();
 
-  const [deptCounts, setDeptCounts] = useState({ active: 0, inactive: 0 });
-  const [salesCounts, setSalesCounts] = useState({ active: 0, inactive: 0 });
-  const [custCounts, setCustCounts] = useState({ active: 0, inactive: 0 });
-  const [buyerCounts, setBuyerCounts] = useState({ active: 0, inactive: 0 });
-  const [countryCounts, setCountryCounts] = useState({
-    active: 0,
-    inactive: 0,
-  });
+  const [deptCounts,    setDeptCounts]    = useState({ active: 0, inactive: 0 });
+  const [salesCounts,   setSalesCounts]   = useState({ active: 0, inactive: 0 });
+  const [custCounts,    setCustCounts]    = useState({ active: 0, inactive: 0 });
+  const [buyerCounts,   setBuyerCounts]   = useState({ active: 0, inactive: 0 });
+  const [countryCounts, setCountryCounts] = useState({ active: 0, inactive: 0 });
+  const [productCounts, setProductCounts] = useState({ active: 0, inactive: 0 });
+  const [geRefCounts, setGeRefCounts] = useState({ active: 0, inactive: 0 });
 
   useEffect(() => {
     api
@@ -22,7 +21,7 @@ const Masters = () => {
       .then((res) => {
         const data = res.data.data || [];
         setDeptCounts({
-          active: data.filter((r) => r.status === "Active").length,
+          active:   data.filter((r) => r.status === "Active").length,
           inactive: data.filter((r) => r.status !== "Active").length,
         });
       })
@@ -35,7 +34,7 @@ const Masters = () => {
       .then((res) => {
         const data = res.data.data || [];
         setSalesCounts({
-          active: data.filter((r) => r.status === "Active").length,
+          active:   data.filter((r) => r.status === "Active").length,
           inactive: data.filter((r) => r.status !== "Active").length,
         });
       })
@@ -48,7 +47,7 @@ const Masters = () => {
       .then((res) => {
         const data = res.data.data || [];
         setCustCounts({
-          active: data.filter((r) => r.status === "Active").length,
+          active:   data.filter((r) => r.status === "Active").length,
           inactive: data.filter((r) => r.status !== "Active").length,
         });
       })
@@ -61,7 +60,7 @@ const Masters = () => {
       .then((res) => {
         const data = res.data.data || [];
         setBuyerCounts({
-          active: data.filter((r) => r.status === "Active").length,
+          active:   data.filter((r) => r.status === "Active").length,
           inactive: data.filter((r) => r.status !== "Active").length,
         });
       })
@@ -74,12 +73,38 @@ const Masters = () => {
       .then((res) => {
         const data = res.data.data || [];
         setCountryCounts({
-          active: data.filter((r) => r.status === "Active").length,
+          active:   data.filter((r) => r.status === "Active").length,
           inactive: data.filter((r) => r.status !== "Active").length,
         });
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    api
+      .get("/products")
+      .then((res) => {
+        const data = res.data.data || [];
+        setProductCounts({
+          active:   data.filter((r) => r.status === "Active").length,
+          inactive: data.filter((r) => r.status !== "Active").length,
+        });
+      })
+      .catch(() => {});
+  }, []);
+
+  
+
+useEffect(() => {
+  api.get('/ge-references')
+    .then(res => {
+      const data = res.data.data || [];
+      setGeRefCounts({
+        active:   data.filter(r => r.status === 'Active').length,
+        inactive: data.filter(r => r.status !== 'Active').length
+      });
+    }).catch(() => {});
+}, []);
 
   const subMasters = [
     {
@@ -122,6 +147,7 @@ const Masters = () => {
       label: "Product",
       desc: "Manage product catalogue",
       route: "/masters/product",
+      counts: productCounts,       // ✅ only one Product entry with counts
     },
     {
       icon: "bi-tags-fill",
@@ -195,6 +221,7 @@ const Masters = () => {
     <div className="masters-page">
       <DashboardNavbar />
       <div className="masters-body">
+
         {/* Breadcrumb */}
         <nav className="m-breadcrumb" aria-label="breadcrumb">
           <span className="bc-link" onClick={() => navigate("/dashboard")}>
@@ -260,6 +287,7 @@ const Masters = () => {
             </div>
           ))}
         </div>
+
       </div>
     </div>
   );
