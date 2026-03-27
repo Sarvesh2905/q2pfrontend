@@ -187,3 +187,9 @@
   .masters-title       { font-size: 1.1rem; }
   .sm-card             { min-height: 130px; }
 }
+/* ── Skeleton loading text ── */
+.sm-desc-loading {
+  color: #ddd;
+  font-size: 0.7rem;
+  font-style: italic;
+}

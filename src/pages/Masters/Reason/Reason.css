@@ -1,0 +1,84 @@
+.rn-page { min-height: 100vh; background: #f9f5f5; }
+.rn-body { max-width: 1400px; margin: 0 auto; padding: 22px 20px 56px; }
+
+/* Breadcrumb */
+.rn-breadcrumb   { display: flex; align-items: center; gap: 6px; font-size: .84rem; margin-bottom: 16px; color: #999; }
+.rn-crumb-link   { color: #8B0000; cursor: pointer; font-weight: 600; }
+.rn-crumb-link:hover { text-decoration: underline; }
+.rn-crumb-sep    { color: #ccc; }
+.rn-crumb-active { color: #555; font-weight: 600; }
+
+/* Header */
+.rn-header   { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.rn-title    { color: #5c0000; font-weight: 700; font-size: 1.25rem; margin-bottom: 2px; }
+.rn-subtitle { margin: 0; font-size: .8rem; color: #999; }
+.rn-role-pill { background: #f0e0e0; color: #8B0000; font-size: .76rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+
+/* Toolbar */
+.rn-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.rn-search  { flex: 1; }
+.rn-search .input-group-text { background: #fff; border-right: none; }
+.rn-search input { border-left: none; }
+.rn-search input:focus { box-shadow: 0 0 0 .2rem rgba(139,0,0,.15); border-color: #8B0000; }
+
+/* Buttons */
+.rn-btn-primary { background: #8B0000; border-color: #8B0000; color: #fff; font-weight: 600; white-space: nowrap; }
+.rn-btn-primary:hover:not(:disabled) { background: #5c0000; border-color: #5c0000; color: #fff; }
+.rn-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.rn-btn-outline { border: 2px solid #8B0000; color: #8B0000; background: transparent; font-weight: 600; }
+.rn-btn-outline:hover { background: #8B0000; color: #fff; }
+
+/* Alert */
+.rn-alert { animation: rnFade .3s ease; }
+@keyframes rnFade { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Split layout */
+.rn-main { display: flex; gap: 14px; margin-top: 6px; }
+.rn-table-wrapper { flex: 1; min-width: 0; }
+
+/* Table */
+.rn-table-container {
+  max-height: calc(100vh - 280px);
+  border-radius: 12px; overflow: auto;
+  background: #fff; border: 1px solid #f0e8e8;
+  box-shadow: 0 2px 10px rgba(139,0,0,.06);
+}
+.rn-table thead { position: sticky; top: 0; z-index: 1; }
+.rn-table thead th { background: #f4e8e8; color: #5c0000; font-size: .8rem; padding: 10px 12px; }
+.rn-table tbody tr { transition: background .15s; }
+.rn-table tbody tr:hover { background: #fdf8f8; cursor: default; }
+.rn-table tbody td { font-size: .82rem; padding: 9px 12px; vertical-align: middle; }
+.rn-row-selected { background: #fff4f4 !important; }
+.rn-records, .rn-page-info { font-size: .78rem; color: #888; }
+.rn-code-cell { font-weight: 700; color: #2c2c2c; font-size: .83rem; letter-spacing: .4px; }
+.rn-desc-cell { color: #555; font-size: .8rem; }
+
+/* Form Panel */
+.rn-form-panel {
+  width: 310px; min-width: 290px; max-width: 330px;
+  background: #fff; border-radius: 12px;
+  border: 1.5px solid #f0e0e0;
+  border-top: 4px solid #8B0000;
+  box-shadow: 0 6px 24px rgba(139,0,0,.12);
+  padding: 16px 14px;
+  height: calc(100vh - 200px);
+  display: flex; flex-direction: column;
+}
+.rn-form-scroll   { overflow-y: auto; flex: 1; padding-right: 4px; }
+.rn-form-title    { font-size: 1rem; font-weight: 700; color: #5c0000; margin-bottom: 2px; display: flex; align-items: center; }
+.rn-form-subtitle { font-size: .76rem; color: #aaa; margin-bottom: 10px; }
+.req        { color: #c0392b; }
+.form-label { font-weight: 600; color: #5c0000; font-size: .82rem; margin-bottom: 4px; }
+.rn-input:focus   { border-color: #8B0000 !important; box-shadow: 0 0 0 .15rem rgba(139,0,0,.15) !important; }
+.rn-input.is-invalid { border-color: #dc3545 !important; }
+.rn-locked { background: #f5f5f5 !important; color: #888 !important; cursor: not-allowed; }
+.rn-info-box { background: #fdf8f8; border: 1px solid #f0e0e0; border-radius: 10px; padding: 12px; }
+.rn-info-label { font-size: .78rem; color: #888; font-weight: 600; }
+.rn-info-value { font-size: .82rem; color: #333; font-weight: 700; }
+.rn-no-status-note { font-size: .74rem; color: #888; font-style: italic; }
+
+@media (max-width: 1100px) {
+  .rn-main { flex-direction: column; }
+  .rn-form-panel { width: 100%; max-width: none; height: auto; }
+  .rn-form-scroll { max-height: 60vh; }
+}

@@ -18,7 +18,7 @@ const modules = [
     label: "Enquiry",
     desc: "Create and track customer RFQs with revision history",
     route: "/enquiry",
-    active: false,
+    active: true,
     color: "#1a5276",
   },
   {

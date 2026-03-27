@@ -20,6 +20,15 @@ import Product from './pages/Masters/Product/Product';
 import Price from './pages/Masters/Price/Price';
 import GEReference from './pages/Masters/GEReference/GEReference';
 import Discount from './pages/Masters/Discount/Discount';
+import SpclDiscount from "./pages/Masters/SpclDiscount/SpclDiscount";
+import EndIndustry from "./pages/Masters/EndIndustry/EndIndustry";
+import CustomerType from "./pages/Masters/CustomerType/CustomerType";
+import StatusMaster from "./pages/Masters/StatusMaster/StatusMaster";
+import Reason from "./pages/Masters/Reason/Reason";
+import TimelineTarget from "./pages/Masters/TimelineTarget/TimelineTarget";
+import CostPrice from "./pages/Masters/CostPrice/CostPrice";
+import EnquiryHome from "./pages/Enquiry/EnquiryHome";
+import AddEnquiry from "./pages/Enquiry/AddEnquiry/AddEnquiry";
 
 
 
@@ -32,11 +41,9 @@ function App() {
         <Routes>
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/create-account" element={<CreateAccount />} />
-
           {/* Protected routes */}
           <Route
             path="/dashboard"
@@ -46,7 +53,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/masters"
             element={
@@ -55,7 +61,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/masters/users-dept"
             element={
@@ -64,7 +69,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/masters/sales-contact"
             element={
@@ -73,7 +77,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/masters/customer"
             element={
@@ -82,7 +85,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-
           <Route
             path="/masters/buyer"
             element={
@@ -99,12 +101,120 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/masters/product"
+            element={
+              <ProtectedRoute>
+                <Product />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/price"
+            element={
+              <ProtectedRoute>
+                <Price />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/ge-reference"
+            element={
+              <ProtectedRoute>
+                <GEReference />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/discount"
+            element={
+              <ProtectedRoute>
+                <Discount />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/special-discount"
+            element={
+              <ProtectedRoute>
+                <SpclDiscount />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/end-industry"
+            element={
+              <ProtectedRoute>
+                <EndIndustry />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/customer-type"
+            element={
+              <ProtectedRoute>
+                <CustomerType />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/status"
+            element={
+              <ProtectedRoute>
+                <StatusMaster />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/reason"
+            element={
+              <ProtectedRoute>
+                <Reason />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/timeline-target"
+            element={
+              <ProtectedRoute>
+                <TimelineTarget />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/cost-price"
+            element={
+              <ProtectedRoute>
+                <CostPrice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/masters/cost-price"
+            element={
+              <ProtectedRoute>
+                <CostPrice />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enquiry"
+            element={
+              <ProtectedRoute>
+                <EnquiryHome />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/enquiry/add"
+            element={
+              <ProtectedRoute>
+                <AddEnquiry />
+              </ProtectedRoute>
+            }
+          />
           
-          <Route path="/masters/product" element={<ProtectedRoute><Product /></ProtectedRoute>} />
-          <Route path="/masters/price" element={<ProtectedRoute><Price /></ProtectedRoute>} />
-          <Route path="/masters/ge-reference" element={<ProtectedRoute><GEReference /></ProtectedRoute>} />
-          <Route path="/masters/discount" element={<ProtectedRoute><Discount /></ProtectedRoute>} />
-          {/* Future module routes */}
+          ; ; ; ; ; ; ; ;{/* Future module routes */}
           {/* <Route path="/masters/buyer"            element={<ProtectedRoute><Buyer /></ProtectedRoute>} /> */}
           {/* <Route path="/masters/country"          element={<ProtectedRoute><Country /></ProtectedRoute>} /> */}
           {/* <Route path="/masters/product"          element={<ProtectedRoute><Product /></ProtectedRoute>} /> */}
@@ -113,7 +223,6 @@ function App() {
           {/* <Route path="/price-offer"              element={<ProtectedRoute><PriceOffer /></ProtectedRoute>} /> */}
           {/* <Route path="/approval"                 element={<ProtectedRoute><Approval /></ProtectedRoute>} /> */}
           {/* <Route path="/price-upload"             element={<ProtectedRoute><PriceUpload /></ProtectedRoute>} /> */}
-
           {/* Catch-all */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>

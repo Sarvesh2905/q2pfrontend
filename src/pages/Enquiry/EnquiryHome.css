@@ -1,0 +1,114 @@
+.enq-home-page { min-height: 100vh; background: #f9f5f5; }
+.enq-home-body { max-width: 1200px; margin: 0 auto; padding: 24px 20px 60px; }
+
+/* Breadcrumb */
+.enq-breadcrumb   { display: flex; align-items: center; gap: 6px; font-size: .84rem; margin-bottom: 20px; color: #999; }
+.enq-crumb-link   { color: #8B0000; cursor: pointer; font-weight: 600; }
+.enq-crumb-link:hover { text-decoration: underline; }
+.enq-crumb-sep    { color: #ccc; }
+.enq-crumb-active { color: #555; font-weight: 600; }
+
+/* Header */
+.enq-home-header  { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+.enq-home-title   { font-size: 1.6rem; font-weight: 800; color: #5c0000; margin: 0; }
+.enq-home-subtitle{ font-size: .88rem; color: #999; margin: 4px 0 0; }
+.enq-role-pill    { background: #f0e0e0; color: #8B0000; font-size: .78rem; padding: 5px 14px; border-radius: 20px; font-weight: 700; }
+
+/* Sprint badge */
+.enq-sprint-badge {
+  background: #fff8e1; border: 1px solid #ffe082;
+  color: #f57f17; font-size: .8rem; font-weight: 600;
+  padding: 8px 14px; border-radius: 8px;
+  margin-bottom: 28px; display: inline-flex; align-items: center;
+}
+
+/* Cards Grid */
+.enq-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.enq-card {
+  position: relative;
+  border-radius: 16px;
+  padding: 28px 24px;
+  cursor: pointer;
+  transition: transform .22s, box-shadow .22s;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  min-height: 200px;
+}
+.enq-card:hover:not(.enq-card-locked) {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(139,0,0,.18);
+}
+.enq-card-locked {
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(30%);
+}
+
+/* Card Colors */
+.card-red    { background: linear-gradient(135deg, #8B0000, #c0392b); color: #fff; }
+.card-maroon { background: linear-gradient(135deg, #4a0000, #7b1a1a); color: #fff; }
+.card-dark   { background: linear-gradient(135deg, #2c2c2c, #555);    color: #fff; }
+
+/* Lock badge */
+.enq-lock-badge {
+  position: absolute; top: 14px; right: 14px;
+  background: rgba(0,0,0,.35); color: #fff;
+  font-size: .7rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+}
+
+/* Card Icon */
+.enq-card-icon-wrap {
+  width: 56px; height: 56px;
+  background: rgba(255,255,255,.18);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+}
+.enq-card-icon { font-size: 1.8rem; color: #fff; }
+
+/* Card Body */
+.enq-card-title { font-size: 1.1rem; font-weight: 800; margin: 0; color: #fff; }
+.enq-card-desc  { font-size: .82rem; color: rgba(255,255,255,.82); margin: 0; line-height: 1.5; }
+
+/* Card Arrow */
+.enq-card-arrow {
+  margin-top: auto;
+  font-size: 1.4rem;
+  color: rgba(255,255,255,.7);
+  text-align: right;
+}
+
+/* Stats Row */
+.enq-stats-row {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  margin-top: 8px;
+}
+.enq-stat-box {
+  flex: 1; min-width: 160px;
+  background: #fff;
+  border: 1px solid #f0e0e0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 2px 8px rgba(139,0,0,.06);
+}
+.enq-stat-icon   { font-size: 1.6rem; }
+.enq-stat-icon.green  { color: #2e7d32; }
+.enq-stat-icon.orange { color: #e65100; }
+.enq-stat-icon.red    { color: #8B0000; }
+.enq-stat-label  { font-size: .75rem; color: #999; font-weight: 600; }
+.enq-stat-value  { font-size: 1rem; font-weight: 800; color: #333; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .enq-cards-grid { grid-template-columns: 1fr; }
+  .enq-home-title { font-size: 1.3rem; }
+}

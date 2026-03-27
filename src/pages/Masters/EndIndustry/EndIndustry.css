@@ -1,0 +1,83 @@
+.ei-page { min-height: 100vh; background: #f9f5f5; }
+.ei-body { max-width: 1400px; margin: 0 auto; padding: 22px 20px 56px; }
+
+/* Breadcrumb */
+.ei-breadcrumb   { display: flex; align-items: center; gap: 6px; font-size: .84rem; margin-bottom: 16px; color: #999; }
+.ei-crumb-link   { color: #8B0000; cursor: pointer; font-weight: 600; }
+.ei-crumb-link:hover { text-decoration: underline; }
+.ei-crumb-sep    { color: #ccc; }
+.ei-crumb-active { color: #555; font-weight: 600; }
+
+/* Header */
+.ei-header   { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.ei-title    { color: #5c0000; font-weight: 700; font-size: 1.25rem; margin-bottom: 2px; }
+.ei-subtitle { margin: 0; font-size: .8rem; color: #999; }
+.ei-role-pill { background: #f0e0e0; color: #8B0000; font-size: .76rem; padding: 4px 12px; border-radius: 20px; font-weight: 600; }
+
+/* Toolbar */
+.ei-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.ei-search  { flex: 1; }
+.ei-search .input-group-text { background: #fff; border-right: none; }
+.ei-search input { border-left: none; }
+.ei-search input:focus { box-shadow: 0 0 0 .2rem rgba(139,0,0,.15); border-color: #8B0000; }
+
+/* Buttons */
+.ei-btn-primary { background: #8B0000; border-color: #8B0000; color: #fff; font-weight: 600; white-space: nowrap; }
+.ei-btn-primary:hover:not(:disabled) { background: #5c0000; border-color: #5c0000; color: #fff; }
+.ei-btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+.ei-btn-outline { border: 2px solid #8B0000; color: #8B0000; background: transparent; font-weight: 600; }
+.ei-btn-outline:hover { background: #8B0000; color: #fff; }
+
+/* Alert */
+.ei-alert { animation: eiFade .3s ease; }
+@keyframes eiFade { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Split layout */
+.ei-main { display: flex; gap: 14px; margin-top: 6px; }
+.ei-table-wrapper { flex: 1; min-width: 0; }
+
+/* Table */
+.ei-table-container {
+  max-height: calc(100vh - 280px);
+  border-radius: 12px; overflow: auto;
+  background: #fff; border: 1px solid #f0e8e8;
+  box-shadow: 0 2px 10px rgba(139,0,0,.06);
+}
+.ei-table thead { position: sticky; top: 0; z-index: 1; }
+.ei-table thead th { background: #f4e8e8; color: #5c0000; font-size: .8rem; padding: 10px 12px; }
+.ei-table tbody tr { cursor: default; transition: background .15s; }
+.ei-table tbody tr:hover { background: #fdf8f8; }
+.ei-table tbody td { font-size: .82rem; padding: 9px 12px; vertical-align: middle; }
+.ei-row-selected { background: #fff4f4 !important; }
+.ei-records, .ei-page-info { font-size: .78rem; color: #888; }
+.ei-desc-cell { color: #555; font-size: .8rem; }
+
+/* Avatar + Name */
+.ei-avatar   { width: 28px; height: 28px; border-radius: 50%; background: #f4e8e8; color: #8B0000; font-weight: 700; font-size: .78rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ei-ind-name { font-weight: 700; color: #2c2c2c; font-size: .83rem; letter-spacing: .3px; }
+
+/* Form Panel */
+.ei-form-panel {
+  width: 300px; min-width: 280px; max-width: 320px;
+  background: #fff; border-radius: 12px;
+  border: 1.5px solid #f0e0e0;
+  border-top: 4px solid #8B0000;
+  box-shadow: 0 6px 24px rgba(139,0,0,.12);
+  padding: 16px 14px;
+  height: calc(100vh - 200px);
+  display: flex; flex-direction: column;
+}
+.ei-form-scroll   { overflow-y: auto; flex: 1; padding-right: 4px; }
+.ei-form-title    { font-size: 1rem; font-weight: 700; color: #5c0000; margin-bottom: 2px; display: flex; align-items: center; }
+.ei-form-subtitle { font-size: .76rem; color: #aaa; margin-bottom: 10px; }
+.req        { color: #c0392b; }
+.form-label { font-weight: 600; color: #5c0000; font-size: .82rem; margin-bottom: 4px; }
+.ei-input:focus   { border-color: #8B0000 !important; box-shadow: 0 0 0 .15rem rgba(139,0,0,.15) !important; }
+.ei-input.is-invalid { border-color: #dc3545 !important; }
+.ei-locked { background: #f5f5f5 !important; color: #888 !important; cursor: not-allowed; }
+
+@media (max-width: 1100px) {
+  .ei-main { flex-direction: column; }
+  .ei-form-panel { width: 100%; max-width: none; height: auto; }
+  .ei-form-scroll { max-height: 60vh; }
+}
