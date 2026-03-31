@@ -29,7 +29,8 @@ const SpclDiscount = () => {
     if (text) setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
-  /* ── Customers dropdown ── */
+  /* ── Customers dropdown ──
+     Controller now returns customer_name + Location correctly */
   useEffect(() => {
     api
       .get("/spcl-discounts/customers")
@@ -137,7 +138,6 @@ const SpclDiscount = () => {
       return;
     }
     if (nameError) return;
-
     try {
       await api.post("/spcl-discounts", { Name: nameVal });
       showMsg("Special discount added successfully!", "success");
@@ -191,7 +191,6 @@ const SpclDiscount = () => {
               Customers eligible for special discount pricing
             </p>
           </div>
-          {/* ── Removed active/inactive count pills ── */}
           <div className="d-flex align-items-center gap-2 flex-wrap">
             <span className="spc-role-pill">Role: {role}</span>
           </div>
@@ -390,14 +389,20 @@ const SpclDiscount = () => {
                   </label>
                   {isAdd ? (
                     <>
+                      {/* FIX: composite key prevents duplicate-key warning
+                          when two customers share the same name but differ
+                          by Location (division) */}
                       <select
                         className={`form-control spc-input ${nameError ? "is-invalid" : ""}`}
                         value={nameVal}
                         onChange={(e) => setNameVal(e.target.value)}
                       >
                         <option value="">-- Select Customer --</option>
-                        {customers.map((c) => (
-                          <option key={c.name} value={c.name}>
+                        {customers.map((c, i) => (
+                          <option
+                            key={`${c.name}-${c.division || i}`}
+                            value={c.name}
+                          >
                             {c.division ? `${c.name} - ${c.division}` : c.name}
                           </option>
                         ))}

@@ -93,13 +93,10 @@ const Customer = () => {
   const [isAdd, setIsAdd] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  /* dropdown options */
   const [typeOptions, setTypeOptions] = useState([]);
   const [countryOptions, setCountryOptions] = useState([]);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [ltsaOptions, setLtsaOptions] = useState([]);
-
-  /* category new add toggle */
   const [addNewCatg, setAddNewCatg] = useState(false);
 
   const initForm = {
@@ -119,57 +116,53 @@ const Customer = () => {
   };
   const [form, setForm] = useState(initForm);
 
-  /* Auto-dismiss message */
   const showMsg = (text, type) => {
     setMessage({ text, type });
     if (text) setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
-  /* ── Fetch table data ── */
-  const fetchRows = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/customers");
-      setRows(res.data.data || []);
-    } catch {
-      showMsg("Failed to load customers", "danger");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ── Fetch dropdowns ── */
+  /* ── Fetch dropdowns ──
+     FIX: each dropdown has its own isolated try/catch with correct
+          endpoint, field name and fallback — one failure no longer
+          silently kills all dropdowns */
   const fetchDropdowns = async (currentRows = []) => {
+    /* 1. Customer types — controller returns plain string[] */
     try {
-      const [t, co] = await Promise.all([
-        api.get("/customer-types"),
-        api.get("/countries"),
-      ]);
-
-      // Customer types from quote_data
+      const tRes = await api.get("/customers/dropdown/types");
+      setTypeOptions((tRes.data || []).filter(Boolean).sort());
+    } catch {
       setTypeOptions(
-        (t.data.data || [])
-          .filter((r) => r.Status === "Active")
-          .map((r) => r.Data),
+        [
+          ...new Set(currentRows.map((r) => r.customer_type).filter(Boolean)),
+        ].sort(),
       );
+    }
 
-      // Countries from country master
+    /* 2. Countries — controller returns plain string[] */
+    try {
+      const cRes = await api.get("/customers/dropdown/countries");
+      setCountryOptions((cRes.data || []).filter(Boolean).sort());
+    } catch {
       setCountryOptions(
-        (co.data.data || [])
-          .filter((r) => r.status === "Active")
-          .map((r) => r.Country_name),
+        [
+          ...new Set(
+            currentRows.map((r) => r.customer_country).filter(Boolean),
+          ),
+        ].sort(),
       );
+    }
 
-      // Categories — unique values from existing customer rows
-      const cats = [
-        ...new Set(currentRows.map((r) => r.Category).filter(Boolean)),
-      ].sort();
-      setCategoryOptions(cats);
+    /* 3. Categories — from already loaded rows */
+    setCategoryOptions(
+      [...new Set(currentRows.map((r) => r.Category).filter(Boolean))].sort(),
+    );
 
-      // LTSA codes — empty for now
+    /* 4. LTSA codes */
+    try {
+      const lRes = await api.get("/customers/dropdown/ltsa-codes");
+      setLtsaOptions((lRes.data || []).filter(Boolean).sort());
+    } catch {
       setLtsaOptions([]);
-    } catch (err) {
-      console.error("Dropdown fetch failed:", err);
     }
   };
 
@@ -310,7 +303,7 @@ const Customer = () => {
         setShowForm(false);
         setSelected(null);
       }
-      // Refresh rows + dropdowns after save
+
       const res = await api.get("/customers");
       const data = res.data.data || [];
       setRows(data);

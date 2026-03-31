@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import DashboardNavbar from "../../../components/DashboardNavbar/DashboardNavbar";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
@@ -15,6 +15,8 @@ const NUMERIC_FIELDS = [
   { key: "Cancelled", label: "Cancelled" },
 ];
 
+const isValidInt = (val) => /^\d+$/.test(String(val).trim());
+
 const TimelineTarget = () => {
   const { user } = useAuth();
   const role = user?.role || "View-only";
@@ -28,7 +30,6 @@ const TimelineTarget = () => {
   const [showForm, setShowForm] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  /* Edit state — one object for all numeric fields */
   const [editVals, setEditVals] = useState({});
   const [editErrs, setEditErrs] = useState({});
 
@@ -37,8 +38,7 @@ const TimelineTarget = () => {
     if (text) setTimeout(() => setMessage({ text: "", type: "" }), 5000);
   };
 
-  /* ── Fetch ── */
-  const fetchRows = async () => {
+  const fetchRows = useCallback(async () => {
     setLoading(true);
     try {
       const res = await api.get("/timeline-target");
@@ -48,13 +48,12 @@ const TimelineTarget = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchRows();
-  }, []);
+  }, [fetchRows]);
 
-  /* ── Dynamic filter ── */
   const filtered = useMemo(() => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
@@ -86,7 +85,6 @@ const TimelineTarget = () => {
     setPage(1);
   }, [search]);
 
-  /* ── Handlers ── */
   const resetForm = () => {
     setSelected(null);
     setShowForm(false);
@@ -112,14 +110,10 @@ const TimelineTarget = () => {
 
   const handleFieldChange = (key, val) => {
     setEditVals((prev) => ({ ...prev, [key]: val }));
-    if (val === "" || isNaN(parseInt(val)) || parseInt(val) < 0) {
-      setEditErrs((prev) => ({
-        ...prev,
-        [key]: "Must be a non-negative number",
-      }));
-    } else {
-      setEditErrs((prev) => ({ ...prev, [key]: "" }));
-    }
+    setEditErrs((prev) => ({
+      ...prev,
+      [key]: isValidInt(val) ? "" : "Must be a non-negative whole number",
+    }));
   };
 
   const hasErrors =
@@ -128,7 +122,10 @@ const TimelineTarget = () => {
       (f) => editVals[f.key] === "" || editVals[f.key] === undefined,
     );
 
-  /* ── Submit Edit ── */
+  /* FIX B2: payload keys are lowercase to match controller destructure:
+     const { enquiry, technical_offer, priced_offer,
+             price_book_order, regret, cancelled } = req.body
+     Sending PascalCase made every field undefined → 400 on every save. */
   const handleEdit = async (ev) => {
     ev.preventDefault();
     if (!selected || hasErrors) return;
@@ -142,31 +139,20 @@ const TimelineTarget = () => {
         cancelled: editVals.Cancelled,
       });
       showMsg("Timeline target updated successfully!", "success");
-      /* Update local row */
-      setRows((prev) =>
-        prev.map((r) =>
-          r.Sno === selected.Sno
-            ? {
-                ...r,
-                Enquiry: parseInt(editVals.Enquiry),
-                Technical_offer: parseInt(editVals.Technical_offer),
-                Priced_offer: parseInt(editVals.Priced_offer),
-                Price_book_order: parseInt(editVals.Price_book_order),
-                Regret: parseInt(editVals.Regret),
-                Cancelled: parseInt(editVals.Cancelled),
-              }
-            : r,
-        ),
-      );
-      setSelected((prev) => ({
-        ...prev,
+
+      const parsed = {
         Enquiry: parseInt(editVals.Enquiry),
         Technical_offer: parseInt(editVals.Technical_offer),
         Priced_offer: parseInt(editVals.Priced_offer),
         Price_book_order: parseInt(editVals.Price_book_order),
         Regret: parseInt(editVals.Regret),
         Cancelled: parseInt(editVals.Cancelled),
-      }));
+      };
+
+      setRows((prev) =>
+        prev.map((r) => (r.Sno === selected.Sno ? { ...r, ...parsed } : r)),
+      );
+      setSelected((prev) => ({ ...prev, ...parsed }));
     } catch (err) {
       showMsg(err.response?.data?.message || "Update failed", "danger");
     }
@@ -406,6 +392,7 @@ const TimelineTarget = () => {
                     <input
                       type="number"
                       min="0"
+                      step="1"
                       className={`form-control tt-input ${editErrs[key] ? "is-invalid" : ""}`}
                       value={editVals[key] ?? ""}
                       onChange={(e) => handleFieldChange(key, e.target.value)}

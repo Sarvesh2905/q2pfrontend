@@ -6,6 +6,12 @@ import "./CustomerType.css";
 
 const PAGE_SIZE = 50;
 
+// FIX: handles both field-name variants the API might return:
+// 'Customer_Type' (if controller aliases it), 'customer_type' (raw column),
+// or 'Data' (if reading from quote_data table)
+const getTypeName = (r) =>
+  r?.Customer_Type || r?.customer_type || r?.Data || "";
+
 const CustomerType = () => {
   const { user } = useAuth();
   const role = user?.role || "View-only";
@@ -20,7 +26,6 @@ const CustomerType = () => {
   const [isAdd, setIsAdd] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
 
-  /* Add state */
   const [ctVal, setCtVal] = useState("");
   const [ctError, setCtError] = useState("");
   const [checking, setChecking] = useState(false);
@@ -74,7 +79,8 @@ const CustomerType = () => {
     if (!search.trim()) return rows;
     const q = search.toLowerCase();
     return rows.filter((r) =>
-      [r.Sno, r.Customer_Type, r.Status].some((v) =>
+      // FIX: was [r.Sno, r.Customer_Type, r.Status] — r.Customer_Type was undefined
+      [r.Sno, getTypeName(r), r.Status].some((v) =>
         String(v ?? "")
           .toLowerCase()
           .includes(q),
@@ -240,7 +246,7 @@ const CustomerType = () => {
                 <thead>
                   <tr>
                     <th style={{ width: "8%" }}>Sno</th>
-                    <th style={{ width: "72%" }}>Customer_Type</th>
+                    <th style={{ width: "72%" }}>Customer Type</th>
                     <th style={{ width: "20%" }} className="text-center">
                       Action
                     </th>
@@ -279,7 +285,9 @@ const CustomerType = () => {
                         >
                           {(page - 1) * PAGE_SIZE + idx + 1}
                         </td>
-                        <td className="ct-type-name">{r.Customer_Type}</td>
+                        {/* FIX: was r.Customer_Type — undefined when API returns
+                            r.Data (quote_data) or r.customer_type (own table) */}
+                        <td className="ct-type-name">{getTypeName(r)}</td>
                         <td className="text-center">
                           {canModify ? (
                             <div
@@ -358,10 +366,9 @@ const CustomerType = () => {
                 noValidate
                 className="ct-form-scroll"
               >
-                {/* Customer Type field */}
                 <div className="mb-3">
                   <label className="form-label">
-                    Customer_Type {isAdd && <span className="req">*</span>}
+                    Customer Type {isAdd && <span className="req">*</span>}
                   </label>
                   {isAdd ? (
                     <>
@@ -388,10 +395,11 @@ const CustomerType = () => {
                       </small>
                     </>
                   ) : (
+                    // FIX: was selected?.Customer_Type — undefined for same reason
                     <input
                       type="text"
                       className="form-control ct-input ct-locked"
-                      value={selected?.Customer_Type || ""}
+                      value={getTypeName(selected)}
                       disabled
                     />
                   )}
