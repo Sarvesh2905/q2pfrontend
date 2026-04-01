@@ -22,7 +22,7 @@ const enquiryCards = [
     icon: "bi-table",
     path: "/enquiry/register",
     color: "card-maroon",
-    available: false, // next sprint
+    available: true, 
   },
   {
     id: 3,
@@ -31,7 +31,7 @@ const enquiryCards = [
     icon: "bi-pencil-square",
     path: "/enquiry/edit",
     color: "card-dark",
-    available: false, // next sprint
+    available: true, 
   },
 ];
 
@@ -79,11 +79,11 @@ const EnquiryHome = () => {
         </div>
 
         {/* ── Sprint Badge ── */}
-        <div className="enq-sprint-badge">
+        {/* <div className="enq-sprint-badge">
           <i className="bi bi-info-circle me-1"></i>
           Sprint 1 — Add Enquiry is active. Edit &amp; Register coming in next
           sprint.
-        </div>
+        </div> */}
 
         {/* ── Cards ── */}
         <div className="enq-cards-grid">
@@ -123,7 +123,7 @@ const EnquiryHome = () => {
         </div>
 
         {/* ── Stats Row ── */}
-        <div className="enq-stats-row">
+        {/* <div className="enq-stats-row">
           <div className="enq-stat-box">
             <i className="bi bi-check-circle-fill enq-stat-icon green"></i>
             <div>
@@ -145,7 +145,7 @@ const EnquiryHome = () => {
               <div className="enq-stat-value">3 Features</div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

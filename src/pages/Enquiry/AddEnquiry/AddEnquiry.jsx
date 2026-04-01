@@ -9,7 +9,6 @@ import "./AddEnquiry.css";
 const today = () => new Date().toISOString().split("T")[0];
 
 const EMPTY = {
-  // Section 1
   customer_name: "",
   customer_type: "",
   customer_country: "",
@@ -20,7 +19,6 @@ const EMPTY = {
   end_country: "",
   end_industry: "",
   end_industry_desc: "",
-  // Section 2
   receipt_date: "",
   ae_name: "",
   sales_contact: "",
@@ -28,7 +26,6 @@ const EMPTY = {
   rfq_category: "",
   rfq_reference: "",
   comments: "",
-  // Section 3
   facing_factory: "",
   products: [],
   project_name: "",
@@ -36,29 +33,89 @@ const EMPTY = {
   proposed_due_date: "",
   lines_in_rfq: "",
   win_probability: "",
-  // Section 4
   opportunity_stage: "",
   expected_order_date: "",
   eff_enq_date: "",
   priority: "",
 };
 
+/* ─────────────────────────────────────────────────────
+   ProductImageCard
+   - Reads BASE_URL from your axios instance (same base
+     as api.js) so it always matches your backend port.
+   - app.js serves: app.use("/static", express.static("public"))
+     So image URL = http://localhost:5001/static/images/placeholder.png
+   - onError fires ONCE → shows SVG fallback, no flicker loop
+───────────────────────────────────────────────────── */
+const BASE_URL = (() => {
+  const base = api.defaults.baseURL || "http://localhost:5001/api";
+  // strip trailing /api to get http://localhost:5001
+  return base.replace(/\/api\/?$/, "");
+})();
+
+function ProductImageCard({ pName, imageFile }) {
+  const [failed, setFailed] = useState(false);
+
+  // Reset error state if a different image is passed
+  useEffect(() => {
+    setFailed(false);
+  }, [imageFile]);
+
+  // ✅ Correct path: /static/images/<filename>
+  // matches app.use("/static", express.static("public"))
+  // so public/images/placeholder.png → /static/images/placeholder.png
+  const imgSrc = imageFile
+    ? `${BASE_URL}/static/images/${imageFile}`
+    : null;
+
+  return (
+    <div className="aeq-img-card">
+      {imgSrc && !failed ? (
+        <img
+          src={imgSrc}
+          alt={pName}
+          width={80}
+          height={80}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <div className="aeq-img-fallback" title={pName}>
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <circle cx="8.5" cy="8.5" r="1.5" />
+            <path d="M21 15l-5-5L5 21" />
+          </svg>
+        </div>
+      )}
+      <span className="aeq-img-label">{pName}</span>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────
+   Main Component
+───────────────────────────────────────────────────── */
 export default function AddEnquiry() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  /* ── form state ── */
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
   const [message, setMessage] = useState({ text: "", type: "" });
   const [saving, setSaving] = useState(false);
 
-  /* ── section unlock ── */
-  const [sec1Done, setSec1Done] = useState(false); // unlocks RFQ
-  const [sec2Done, setSec2Done] = useState(false); // unlocks Product
-  const [sec3Done, setSec3Done] = useState(false); // unlocks Quote
+  const [sec1Done, setSec1Done] = useState(false);
+  const [sec2Done, setSec2Done] = useState(false);
+  const [sec3Done, setSec3Done] = useState(false);
 
-  /* ── dropdown data ── */
   const [customers, setCustomers] = useState([]);
   const [buyers, setBuyers] = useState([]);
   const [endCountries, setEndCountries] = useState([]);
@@ -71,19 +128,13 @@ export default function AddEnquiry() {
   const [productList, setProductList] = useState([]);
   const [oppStages, setOppStages] = useState([]);
 
-  /* ── dynamic add ── */
   const [showNewOppType, setShowNewOppType] = useState(false);
   const [newOppType, setNewOppType] = useState("");
   const [showNewFactory, setShowNewFactory] = useState(false);
   const [newFactory, setNewFactory] = useState("");
 
-  /* ── product images ── */
   const [productImages, setProductImages] = useState({});
-
-  /* ── comments toggle ── */
   const [commentsEnabled, setCommentsEnabled] = useState(false);
-
-  /* ── eff enq date ── */
   const [effEnqEnabled, setEffEnqEnabled] = useState(false);
 
   const showMsg = (text, type) => {
@@ -91,9 +142,7 @@ export default function AddEnquiry() {
     if (text) setTimeout(() => setMessage({ text: "", type: "" }), 6000);
   };
 
-  /* ════════════════════════════════
-     Initial Fetches
-  ════════════════════════════════ */
+  /* ── Initial Fetches ── */
   useEffect(() => {
     const fetchAll = async () => {
       try {
@@ -132,17 +181,13 @@ export default function AddEnquiry() {
       .catch(() => {});
   }, []);
 
-  /* ════════════════════════════════
-     Field Change Handler
-  ════════════════════════════════ */
+  /* ── Field Change ── */
   const handleChange = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  /* ════════════════════════════════
-     Customer selected → auto-fill
-  ════════════════════════════════ */
+  /* ── Customer selected → auto-fill ── */
   const handleCustomerChange = async (name) => {
     handleChange("customer_name", name);
     handleChange("customer_type", "");
@@ -170,20 +215,16 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     End Industry → auto-fill desc
-  ════════════════════════════════ */
+  /* ── End Industry → auto-fill desc ── */
   const handleEndIndustryChange = (industry) => {
     handleChange("end_industry", industry);
     const found = endIndustries.find(
-      (e) => e.Industry.toLowerCase() === industry.toLowerCase(),
+      (e) => e.Industry.toLowerCase() === industry.toLowerCase()
     );
     handleChange("end_industry_desc", found?.Description || "");
   };
 
-  /* ════════════════════════════════
-     Receipt Date → check working days
-  ════════════════════════════════ */
+  /* ── Receipt Date → check working days ── */
   const handleReceiptDateChange = async (date) => {
     handleChange("receipt_date", date);
     if (!date) {
@@ -201,9 +242,7 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     Facing Factory → load products
-  ════════════════════════════════ */
+  /* ── Facing Factory → load products ── */
   const handleFactoryChange = async (factory) => {
     handleChange("facing_factory", factory);
     handleChange("products", []);
@@ -222,10 +261,8 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     Product multi-select toggle
-  ════════════════════════════════ */
-  const handleProductToggle = async (productName, imageFile, checked) => {
+  /* ── Product toggle ── */
+  const handleProductToggle = (productName, imageFile, checked) => {
     setForm((prev) => {
       const updated = checked
         ? [...prev.products, productName]
@@ -243,9 +280,7 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     Dynamic — Add Opportunity Type
-  ════════════════════════════════ */
+  /* ── Add Opportunity Type ── */
   const handleAddOppType = async () => {
     if (!newOppType.trim()) return;
     try {
@@ -261,9 +296,7 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     Dynamic — Add Facing Factory
-  ════════════════════════════════ */
+  /* ── Add Facing Factory ── */
   const handleAddFactory = async () => {
     if (!newFactory.trim()) return;
     try {
@@ -279,13 +312,13 @@ export default function AddEnquiry() {
     }
   };
 
-  /* ════════════════════════════════
-     Section Validators
-  ════════════════════════════════ */
+  /* ── Validators ── */
   const validateSection1 = () => {
     const e = {};
     if (!form.customer_name) e.customer_name = "Required";
     if (!form.end_user_name) e.end_user_name = "Required";
+    if (!form.end_country) e.end_country = "Required";
+    if (!form.end_industry) e.end_industry = "Required";
     setErrors((prev) => ({ ...prev, ...e }));
     return Object.keys(e).length === 0;
   };
@@ -297,6 +330,7 @@ export default function AddEnquiry() {
     if (!form.sales_contact) e.sales_contact = "Required";
     if (!form.opportunity_type) e.opportunity_type = "Required";
     if (!form.rfq_category) e.rfq_category = "Required";
+    if (!form.rfq_reference) e.rfq_reference = "Required";
     if (commentsEnabled && !form.comments)
       e.comments = "Required — Receipt date is beyond 4 working days";
     setErrors((prev) => ({ ...prev, ...e }));
@@ -311,6 +345,12 @@ export default function AddEnquiry() {
     if (!form.customer_due_date) e.customer_due_date = "Required";
     if (!form.proposed_due_date) e.proposed_due_date = "Required";
     if (!form.lines_in_rfq) e.lines_in_rfq = "Required";
+    if (
+      form.lines_in_rfq &&
+      parseInt(form.lines_in_rfq) < form.products.length
+    ) {
+      e.lines_in_rfq = `Must be ≥ products selected (${form.products.length})`;
+    }
     if (!form.win_probability) e.win_probability = "Required";
     setErrors((prev) => ({ ...prev, ...e }));
     return Object.keys(e).length === 0;
@@ -319,14 +359,13 @@ export default function AddEnquiry() {
   const validateSection4 = () => {
     const e = {};
     if (!form.opportunity_stage) e.opportunity_stage = "Required";
+    if (!form.expected_order_date) e.expected_order_date = "Required";
     if (!form.priority) e.priority = "Required";
     setErrors((prev) => ({ ...prev, ...e }));
     return Object.keys(e).length === 0;
   };
 
-  /* ════════════════════════════════
-     Section Confirm Buttons
-  ════════════════════════════════ */
+  /* ── Section Confirms ── */
   const confirmSection1 = () => {
     if (!validateSection1()) return;
     setSec1Done(true);
@@ -345,54 +384,42 @@ export default function AddEnquiry() {
     showMsg("Product section confirmed. Fill Quote details.", "success");
   };
 
-  /* ════════════════════════════════
-     Determine Legacy from products
-  ════════════════════════════════ */
+  /* ── Legacy check ── */
   const isLegacy = useCallback(() => {
     if (!form.products.length) return false;
     return form.products.some((pName) => {
       const found = productList.find((p) => p.Products === pName);
-      return found?.Prd_group === "Legacy";
+      return found?.Prd_group?.toLowerCase() === "legacy";
     });
   }, [form.products, productList]);
 
-  /* ════════════════════════════════
-     SAVE — Generate Quote No + Submit
-  ════════════════════════════════ */
+  /* ── Save ── */
   const handleSave = async () => {
     if (!validateSection4()) return;
     setSaving(true);
     try {
-      // Generate quote number on save
       const qnRes = await api.get("/enquiry/generate-quote-no", {
-        params: {
-          ae_name: form.ae_name,
-          is_legacy: isLegacy(),
-        },
+        params: { ae_name: form.ae_name, is_legacy: isLegacy() },
       });
       const quote_number = qnRes.data.data;
-
       await api.post("/enquiry/create", {
         ...form,
         quote_number,
         register_date: today(),
       });
-
       showMsg(`Enquiry created! Quote No: ${quote_number}`, "success");
       setTimeout(() => navigate("/enquiry"), 2500);
     } catch (err) {
       showMsg(
         err.response?.data?.message || "Failed to save enquiry",
-        "danger",
+        "danger"
       );
     } finally {
       setSaving(false);
     }
   };
 
-  /* ════════════════════════════════
-     Reset
-  ════════════════════════════════ */
+  /* ── Reset ── */
   const handleReset = () => {
     setForm(EMPTY);
     setErrors({});
@@ -413,26 +440,20 @@ export default function AddEnquiry() {
       .catch(() => {});
   };
 
-  /* ════════════════════════════════
-     Eff Enq Date — min/max
-     range = receipt_date to today
-  ════════════════════════════════ */
   const effEnqMin = form.receipt_date || today();
   const effEnqMax = today();
 
-  /* ════════════════════════════════
+  /* ══════════════════════════════════════════════
      RENDER
-  ════════════════════════════════ */
+  ══════════════════════════════════════════════ */
   return (
     <div className="aeq-page">
       <DashboardNavbar />
       <div className="aeq-body">
+
         {/* Breadcrumb */}
         <div className="aeq-breadcrumb">
-          <span
-            className="aeq-crumb-link"
-            onClick={() => navigate("/dashboard")}
-          >
+          <span className="aeq-crumb-link" onClick={() => navigate("/dashboard")}>
             <i className="bi bi-house-fill me-1"></i>Dashboard
           </span>
           <span className="aeq-crumb-sep">/</span>
@@ -466,7 +487,9 @@ export default function AddEnquiry() {
             return (
               <React.Fragment key={label}>
                 <div
-                  className={`aeq-step ${done ? "step-done" : active ? "step-active" : "step-locked"}`}
+                  className={`aeq-step ${
+                    done ? "step-done" : active ? "step-active" : "step-locked"
+                  }`}
                 >
                   <div className="aeq-step-circle">
                     {done ? <i className="bi bi-check-lg"></i> : i + 1}
@@ -475,7 +498,9 @@ export default function AddEnquiry() {
                 </div>
                 {i < 3 && (
                   <div
-                    className={`aeq-step-line ${[sec1Done, sec2Done, sec3Done][i] ? "line-done" : ""}`}
+                    className={`aeq-step-line ${
+                      [sec1Done, sec2Done, sec3Done][i] ? "line-done" : ""
+                    }`}
                   ></div>
                 )}
               </React.Fragment>
@@ -487,17 +512,23 @@ export default function AddEnquiry() {
         {message.text && (
           <div className={`alert alert-${message.type} aeq-alert`}>
             <i
-              className={`bi ${message.type === "success" ? "bi-check-circle" : "bi-exclamation-triangle"} me-2`}
+              className={`bi ${
+                message.type === "success"
+                  ? "bi-check-circle"
+                  : "bi-exclamation-triangle"
+              } me-2`}
             ></i>
             {message.text}
           </div>
         )}
 
-        {/* ═══════════════════════════════════
+        {/* ═══════════════════════════════
             SECTION 1 — CUSTOMER
-        ═══════════════════════════════════ */}
+        ═══════════════════════════════ */}
         <div
-          className={`aeq-section ${sec1Done ? "section-done" : "section-active"}`}
+          className={`aeq-section ${
+            sec1Done ? "section-done" : "section-active"
+          }`}
         >
           <div className="aeq-section-header">
             <div className="aeq-section-num">1</div>
@@ -520,9 +551,7 @@ export default function AddEnquiry() {
           <div className="aeq-fields-grid">
             {/* Customer Name */}
             <div className="aeq-field">
-              <label>
-                Customer Name <span className="req">*</span>
-              </label>
+              <label>Customer Name <span className="req">*</span></label>
               <select
                 className={`form-select aeq-input ${errors.customer_name ? "is-invalid" : ""}`}
                 value={form.customer_name}
@@ -541,7 +570,7 @@ export default function AddEnquiry() {
               )}
             </div>
 
-            {/* Category — auto-fill */}
+            {/* Category */}
             <div className="aeq-field">
               <label>Category</label>
               <input
@@ -553,7 +582,7 @@ export default function AddEnquiry() {
               />
             </div>
 
-            {/* Country — auto-fill */}
+            {/* Country */}
             <div className="aeq-field">
               <label>Country</label>
               <input
@@ -576,9 +605,7 @@ export default function AddEnquiry() {
               >
                 <option value="">-- Select Buyer --</option>
                 {buyers.map((b) => (
-                  <option key={b} value={b}>
-                    {b}
-                  </option>
+                  <option key={b} value={b}>{b}</option>
                 ))}
               </select>
             </div>
@@ -596,7 +623,7 @@ export default function AddEnquiry() {
               />
             </div>
 
-            {/* Currency — auto-fill */}
+            {/* Currency */}
             <div className="aeq-field">
               <label>Currency</label>
               <input
@@ -604,15 +631,13 @@ export default function AddEnquiry() {
                 className="form-control aeq-input aeq-readonly"
                 value={form.currency}
                 readOnly
-                placeholder="Auto-filled from customer country"
+                placeholder="Auto-filled from customer"
               />
             </div>
 
             {/* End User Name */}
             <div className="aeq-field">
-              <label>
-                End User Name <span className="req">*</span>
-              </label>
+              <label>End User Name <span className="req">*</span></label>
               <input
                 type="text"
                 className={`form-control aeq-input ${errors.end_user_name ? "is-invalid" : ""}`}
@@ -628,27 +653,28 @@ export default function AddEnquiry() {
 
             {/* End Country */}
             <div className="aeq-field">
-              <label>End User Country</label>
+              <label>End User Country <span className="req">*</span></label>
               <select
-                className="form-select aeq-input"
+                className={`form-select aeq-input ${errors.end_country ? "is-invalid" : ""}`}
                 value={form.end_country}
                 onChange={(e) => handleChange("end_country", e.target.value)}
                 disabled={sec1Done}
               >
                 <option value="">-- Select Country --</option>
                 {endCountries.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
+                  <option key={c} value={c}>{c}</option>
                 ))}
               </select>
+              {errors.end_country && (
+                <div className="aeq-error">{errors.end_country}</div>
+              )}
             </div>
 
             {/* End Industry */}
             <div className="aeq-field">
-              <label>End Industry</label>
+              <label>End Industry <span className="req">*</span></label>
               <select
-                className="form-select aeq-input"
+                className={`form-select aeq-input ${errors.end_industry ? "is-invalid" : ""}`}
                 value={form.end_industry}
                 onChange={(e) => handleEndIndustryChange(e.target.value)}
                 disabled={sec1Done}
@@ -660,9 +686,12 @@ export default function AddEnquiry() {
                   </option>
                 ))}
               </select>
+              {errors.end_industry && (
+                <div className="aeq-error">{errors.end_industry}</div>
+              )}
             </div>
 
-            {/* End Industry Description — auto-fill */}
+            {/* Industry Description */}
             <div className="aeq-field aeq-field-full">
               <label>Industry Description</label>
               <input
@@ -678,23 +707,22 @@ export default function AddEnquiry() {
           {!sec1Done && (
             <div className="aeq-section-footer">
               <button className="btn aeq-btn-confirm" onClick={confirmSection1}>
-                <i className="bi bi-check-lg me-1"></i>Confirm Customer &amp;
-                Proceed to RFQ
+                <i className="bi bi-check-lg me-1"></i>Confirm Customer &amp; Proceed to RFQ
               </button>
             </div>
           )}
         </div>
 
-        {/* ═══════════════════════════════════
+        {/* ═══════════════════════════════
             SECTION 2 — RFQ
-        ═══════════════════════════════════ */}
+        ═══════════════════════════════ */}
         <div
-          className={`aeq-section ${!sec1Done ? "section-locked" : sec2Done ? "section-done" : "section-active"}`}
+          className={`aeq-section ${
+            !sec1Done ? "section-locked" : sec2Done ? "section-done" : "section-active"
+          }`}
         >
           <div className="aeq-section-header">
-            <div className={`aeq-section-num ${!sec1Done ? "num-locked" : ""}`}>
-              2
-            </div>
+            <div className={`aeq-section-num ${!sec1Done ? "num-locked" : ""}`}>2</div>
             <h5 className="aeq-section-title">
               RFQ{" "}
               {!sec1Done && (
@@ -711,10 +739,7 @@ export default function AddEnquiry() {
             {sec2Done && (
               <button
                 className="btn btn-sm aeq-btn-edit ms-auto"
-                onClick={() => {
-                  setSec2Done(false);
-                  setSec3Done(false);
-                }}
+                onClick={() => { setSec2Done(false); setSec3Done(false); }}
               >
                 <i className="bi bi-pencil me-1"></i>Edit
               </button>
@@ -726,9 +751,7 @@ export default function AddEnquiry() {
               <div className="aeq-fields-grid">
                 {/* Receipt Date */}
                 <div className="aeq-field">
-                  <label>
-                    Receipt Date <span className="req">*</span>
-                  </label>
+                  <label>Receipt Date <span className="req">*</span></label>
                   <input
                     type="date"
                     className={`form-control aeq-input ${errors.receipt_date ? "is-invalid" : ""}`}
@@ -744,9 +767,7 @@ export default function AddEnquiry() {
 
                 {/* App Engineer */}
                 <div className="aeq-field">
-                  <label>
-                    Application Engineer <span className="req">*</span>
-                  </label>
+                  <label>Application Engineer <span className="req">*</span></label>
                   <select
                     className={`form-select aeq-input ${errors.ae_name ? "is-invalid" : ""}`}
                     value={form.ae_name}
@@ -755,9 +776,7 @@ export default function AddEnquiry() {
                   >
                     <option value="">-- Select AE --</option>
                     {aeList.map((ae) => (
-                      <option key={ae} value={ae}>
-                        {ae}
-                      </option>
+                      <option key={ae} value={ae}>{ae}</option>
                     ))}
                   </select>
                   {errors.ae_name && (
@@ -767,22 +786,16 @@ export default function AddEnquiry() {
 
                 {/* Sales Contact */}
                 <div className="aeq-field">
-                  <label>
-                    Sales Contact <span className="req">*</span>
-                  </label>
+                  <label>Sales Contact <span className="req">*</span></label>
                   <select
                     className={`form-select aeq-input ${errors.sales_contact ? "is-invalid" : ""}`}
                     value={form.sales_contact}
-                    onChange={(e) =>
-                      handleChange("sales_contact", e.target.value)
-                    }
+                    onChange={(e) => handleChange("sales_contact", e.target.value)}
                     disabled={sec2Done}
                   >
                     <option value="">-- Select Sales Contact --</option>
                     {salesList.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
+                      <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                   {errors.sales_contact && (
@@ -790,25 +803,19 @@ export default function AddEnquiry() {
                   )}
                 </div>
 
-                {/* Opportunity Type + dynamic add */}
+                {/* Opportunity Type */}
                 <div className="aeq-field">
-                  <label>
-                    Opportunity Type <span className="req">*</span>
-                  </label>
+                  <label>Opportunity Type <span className="req">*</span></label>
                   <div className="aeq-inline-add">
                     <select
                       className={`form-select aeq-input ${errors.opportunity_type ? "is-invalid" : ""}`}
                       value={form.opportunity_type}
-                      onChange={(e) =>
-                        handleChange("opportunity_type", e.target.value)
-                      }
+                      onChange={(e) => handleChange("opportunity_type", e.target.value)}
                       disabled={sec2Done}
                     >
                       <option value="">-- Select Type --</option>
                       {oppTypes.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
+                        <option key={o} value={o}>{o}</option>
                       ))}
                     </select>
                     {!sec2Done && (
@@ -834,43 +841,27 @@ export default function AddEnquiry() {
                         value={newOppType}
                         onChange={(e) => setNewOppType(e.target.value)}
                       />
-                      <button
-                        className="btn aeq-btn-confirm-sm"
-                        onClick={handleAddOppType}
-                      >
-                        Add
-                      </button>
+                      <button className="btn aeq-btn-confirm-sm" onClick={handleAddOppType}>Add</button>
                       <button
                         className="btn aeq-btn-cancel-sm"
-                        onClick={() => {
-                          setShowNewOppType(false);
-                          setNewOppType("");
-                        }}
-                      >
-                        Cancel
-                      </button>
+                        onClick={() => { setShowNewOppType(false); setNewOppType(""); }}
+                      >Cancel</button>
                     </div>
                   )}
                 </div>
 
                 {/* RFQ Category */}
                 <div className="aeq-field">
-                  <label>
-                    Category <span className="req">*</span>
-                  </label>
+                  <label>Category <span className="req">*</span></label>
                   <select
                     className={`form-select aeq-input ${errors.rfq_category ? "is-invalid" : ""}`}
                     value={form.rfq_category}
-                    onChange={(e) =>
-                      handleChange("rfq_category", e.target.value)
-                    }
+                    onChange={(e) => handleChange("rfq_category", e.target.value)}
                     disabled={sec2Done}
                   >
                     <option value="">-- Select Category --</option>
                     {rfqCats.map((r) => (
-                      <option key={r} value={r}>
-                        {r}
-                      </option>
+                      <option key={r} value={r}>{r}</option>
                     ))}
                   </select>
                   {errors.rfq_category && (
@@ -880,25 +871,26 @@ export default function AddEnquiry() {
 
                 {/* RFQ Reference */}
                 <div className="aeq-field">
-                  <label>RFQ Reference</label>
+                  <label>RFQ Reference <span className="req">*</span></label>
                   <input
                     type="text"
-                    className="form-control aeq-input"
+                    className={`form-control aeq-input ${errors.rfq_reference ? "is-invalid" : ""}`}
                     value={form.rfq_reference}
-                    onChange={(e) =>
-                      handleChange("rfq_reference", e.target.value)
-                    }
+                    onChange={(e) => handleChange("rfq_reference", e.target.value)}
                     placeholder="Enter RFQ reference"
                     disabled={sec2Done}
                     maxLength={250}
                   />
+                  {errors.rfq_reference && (
+                    <div className="aeq-error">{errors.rfq_reference}</div>
+                  )}
                 </div>
 
-                {/* Register Dt Comments */}
+                {/* Comments */}
                 <div className="aeq-field aeq-field-full">
                   <label>
                     Register Date Comments
-                    {commentsEnabled && <span className="req"> * </span>}
+                    {commentsEnabled && <span className="req"> *</span>}
                     {commentsEnabled ? (
                       <span className="aeq-warn-hint ms-2">
                         <i className="bi bi-exclamation-triangle-fill me-1"></i>
@@ -931,12 +923,8 @@ export default function AddEnquiry() {
 
               {!sec2Done && (
                 <div className="aeq-section-footer">
-                  <button
-                    className="btn aeq-btn-confirm"
-                    onClick={confirmSection2}
-                  >
-                    <i className="bi bi-check-lg me-1"></i>Confirm RFQ &amp;
-                    Proceed to Product
+                  <button className="btn aeq-btn-confirm" onClick={confirmSection2}>
+                    <i className="bi bi-check-lg me-1"></i>Confirm RFQ &amp; Proceed to Product
                   </button>
                 </div>
               )}
@@ -944,16 +932,16 @@ export default function AddEnquiry() {
           )}
         </div>
 
-        {/* ═══════════════════════════════════
+        {/* ═══════════════════════════════
             SECTION 3 — PRODUCT
-        ═══════════════════════════════════ */}
+        ═══════════════════════════════ */}
         <div
-          className={`aeq-section ${!sec2Done ? "section-locked" : sec3Done ? "section-done" : "section-active"}`}
+          className={`aeq-section ${
+            !sec2Done ? "section-locked" : sec3Done ? "section-done" : "section-active"
+          }`}
         >
           <div className="aeq-section-header">
-            <div className={`aeq-section-num ${!sec2Done ? "num-locked" : ""}`}>
-              3
-            </div>
+            <div className={`aeq-section-num ${!sec2Done ? "num-locked" : ""}`}>3</div>
             <h5 className="aeq-section-title">
               Product{" "}
               {!sec2Done && (
@@ -983,11 +971,10 @@ export default function AddEnquiry() {
                 {/* Left — Fields */}
                 <div className="aeq-product-fields">
                   <div className="aeq-fields-grid">
-                    {/* Facing Factory + dynamic add */}
+
+                    {/* Facing Factory */}
                     <div className="aeq-field aeq-field-full">
-                      <label>
-                        Facing Factory <span className="req">*</span>
-                      </label>
+                      <label>Facing Factory <span className="req">*</span></label>
                       <div className="aeq-inline-add">
                         <select
                           className={`form-select aeq-input ${errors.facing_factory ? "is-invalid" : ""}`}
@@ -997,9 +984,7 @@ export default function AddEnquiry() {
                         >
                           <option value="">-- Select Factory --</option>
                           {factories.map((f) => (
-                            <option key={f} value={f}>
-                              {f}
-                            </option>
+                            <option key={f} value={f}>{f}</option>
                           ))}
                         </select>
                         {!sec3Done && (
@@ -1025,44 +1010,30 @@ export default function AddEnquiry() {
                             value={newFactory}
                             onChange={(e) => setNewFactory(e.target.value)}
                           />
-                          <button
-                            className="btn aeq-btn-confirm-sm"
-                            onClick={handleAddFactory}
-                          >
-                            Add
-                          </button>
+                          <button className="btn aeq-btn-confirm-sm" onClick={handleAddFactory}>Add</button>
                           <button
                             className="btn aeq-btn-cancel-sm"
-                            onClick={() => {
-                              setShowNewFactory(false);
-                              setNewFactory("");
-                            }}
-                          >
-                            Cancel
-                          </button>
+                            onClick={() => { setShowNewFactory(false); setNewFactory(""); }}
+                          >Cancel</button>
                         </div>
                       )}
                     </div>
 
-                    {/* Products — multi checkbox */}
+                    {/* Products */}
                     <div className="aeq-field aeq-field-full">
-                      <label>
-                        Product <span className="req">*</span>
-                      </label>
+                      <label>Product <span className="req">*</span></label>
                       {!form.facing_factory ? (
-                        <p className="aeq-muted-hint">
-                          Select a Facing Factory first
-                        </p>
+                        <p className="aeq-muted-hint">Select a Facing Factory first</p>
                       ) : productList.length === 0 ? (
-                        <p className="aeq-muted-hint">
-                          No products found for this factory
-                        </p>
+                        <p className="aeq-muted-hint">No products found for this factory</p>
                       ) : (
                         <div className="aeq-product-checklist">
                           {productList.map((p) => (
                             <label
                               key={p.Products}
-                              className={`aeq-product-check-item ${form.products.includes(p.Products) ? "checked" : ""}`}
+                              className={`aeq-product-check-item ${
+                                form.products.includes(p.Products) ? "checked" : ""
+                              }`}
                             >
                               <input
                                 type="checkbox"
@@ -1071,15 +1042,13 @@ export default function AddEnquiry() {
                                   handleProductToggle(
                                     p.Products,
                                     p.Image,
-                                    e.target.checked,
+                                    e.target.checked
                                   )
                                 }
                                 disabled={sec3Done}
                               />
-                              <span className="aeq-product-name">
-                                {p.Products}
-                              </span>
-                              {p.Prd_group === "Legacy" && (
+                              <span className="aeq-product-name">{p.Products}</span>
+                              {p.Prd_group?.toLowerCase() === "legacy" && (
                                 <span className="aeq-legacy-tag">Legacy</span>
                               )}
                             </label>
@@ -1093,16 +1062,12 @@ export default function AddEnquiry() {
 
                     {/* Project Name */}
                     <div className="aeq-field aeq-field-full">
-                      <label>
-                        Project Name <span className="req">*</span>
-                      </label>
+                      <label>Project Name <span className="req">*</span></label>
                       <input
                         type="text"
                         className={`form-control aeq-input ${errors.project_name ? "is-invalid" : ""}`}
                         value={form.project_name}
-                        onChange={(e) =>
-                          handleChange("project_name", e.target.value)
-                        }
+                        onChange={(e) => handleChange("project_name", e.target.value)}
                         placeholder="Enter project name"
                         disabled={sec3Done}
                         maxLength={75}
@@ -1114,66 +1079,49 @@ export default function AddEnquiry() {
 
                     {/* Customer Due Date */}
                     <div className="aeq-field">
-                      <label>
-                        Customer Due Date <span className="req">*</span>
-                      </label>
+                      <label>Customer Due Date <span className="req">*</span></label>
                       <input
                         type="date"
                         className={`form-control aeq-input ${errors.customer_due_date ? "is-invalid" : ""}`}
                         value={form.customer_due_date}
                         min={today()}
-                        onChange={(e) =>
-                          handleChange("customer_due_date", e.target.value)
-                        }
+                        onChange={(e) => handleChange("customer_due_date", e.target.value)}
                         disabled={sec3Done}
                       />
                       {errors.customer_due_date && (
-                        <div className="aeq-error">
-                          {errors.customer_due_date}
-                        </div>
+                        <div className="aeq-error">{errors.customer_due_date}</div>
                       )}
                     </div>
 
                     {/* Proposed Due Date */}
                     <div className="aeq-field">
-                      <label>
-                        Proposed Due Date <span className="req">*</span>
-                      </label>
+                      <label>Proposed Due Date <span className="req">*</span></label>
                       <input
                         type="date"
                         className={`form-control aeq-input ${errors.proposed_due_date ? "is-invalid" : ""}`}
                         value={form.proposed_due_date}
                         min={today()}
-                        onChange={(e) =>
-                          handleChange("proposed_due_date", e.target.value)
-                        }
+                        onChange={(e) => handleChange("proposed_due_date", e.target.value)}
                         disabled={sec3Done}
                       />
                       <small className="text-muted">
                         Auto-set to today + 2 working days (editable)
                       </small>
                       {errors.proposed_due_date && (
-                        <div className="aeq-error">
-                          {errors.proposed_due_date}
-                        </div>
+                        <div className="aeq-error">{errors.proposed_due_date}</div>
                       )}
                     </div>
 
                     {/* Lines in RFQ */}
                     <div className="aeq-field">
-                      <label>
-                        Lines in RFQ <span className="req">*</span>
-                      </label>
+                      <label>Lines in RFQ <span className="req">*</span></label>
                       <input
                         type="number"
                         min="1"
                         className={`form-control aeq-input ${errors.lines_in_rfq ? "is-invalid" : ""}`}
                         value={form.lines_in_rfq}
                         onChange={(e) =>
-                          handleChange(
-                            "lines_in_rfq",
-                            e.target.value.replace(/\D/g, ""),
-                          )
+                          handleChange("lines_in_rfq", e.target.value.replace(/\D/g, ""))
                         }
                         placeholder="Number of line items"
                         disabled={sec3Done}
@@ -1185,15 +1133,11 @@ export default function AddEnquiry() {
 
                     {/* Winning Probability */}
                     <div className="aeq-field">
-                      <label>
-                        Winning Probability <span className="req">*</span>
-                      </label>
+                      <label>Winning Probability <span className="req">*</span></label>
                       <select
                         className={`form-select aeq-input ${errors.win_probability ? "is-invalid" : ""}`}
                         value={form.win_probability}
-                        onChange={(e) =>
-                          handleChange("win_probability", e.target.value)
-                        }
+                        onChange={(e) => handleChange("win_probability", e.target.value)}
                         disabled={sec3Done}
                       >
                         <option value="">-- Select --</option>
@@ -1202,15 +1146,13 @@ export default function AddEnquiry() {
                         <option value="High">High</option>
                       </select>
                       {errors.win_probability && (
-                        <div className="aeq-error">
-                          {errors.win_probability}
-                        </div>
+                        <div className="aeq-error">{errors.win_probability}</div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Right — Product Images */}
+                {/* ✅ Right — Product Images (FIXED) */}
                 <div className="aeq-product-images">
                   <p className="aeq-img-panel-title">
                     <i className="bi bi-images me-1"></i>Selected Products
@@ -1223,20 +1165,11 @@ export default function AddEnquiry() {
                   ) : (
                     <div className="aeq-img-grid">
                       {form.products.map((pName) => (
-                        <div key={pName} className="aeq-img-card">
-                          <img
-                            src={
-                              productImages[pName]
-                                ? `/static/images/${productImages[pName]}`
-                                : `/static/images/logo.png`
-                            }
-                            alt={pName}
-                            onError={(e) => {
-                              e.target.src = "/static/images/logo.png";
-                            }}
-                          />
-                          <span className="aeq-img-label">{pName}</span>
-                        </div>
+                        <ProductImageCard
+                          key={pName}
+                          pName={pName}
+                          imageFile={productImages[pName]}
+                        />
                       ))}
                     </div>
                   )}
@@ -1245,12 +1178,8 @@ export default function AddEnquiry() {
 
               {!sec3Done && (
                 <div className="aeq-section-footer">
-                  <button
-                    className="btn aeq-btn-confirm"
-                    onClick={confirmSection3}
-                  >
-                    <i className="bi bi-check-lg me-1"></i>Confirm Product &amp;
-                    Proceed to Quote
+                  <button className="btn aeq-btn-confirm" onClick={confirmSection3}>
+                    <i className="bi bi-check-lg me-1"></i>Confirm Product &amp; Proceed to Quote
                   </button>
                 </div>
               )}
@@ -1258,16 +1187,16 @@ export default function AddEnquiry() {
           )}
         </div>
 
-        {/* ═══════════════════════════════════
+        {/* ═══════════════════════════════
             SECTION 4 — QUOTE
-        ═══════════════════════════════════ */}
+        ═══════════════════════════════ */}
         <div
-          className={`aeq-section ${!sec3Done ? "section-locked" : "section-active"}`}
+          className={`aeq-section ${
+            !sec3Done ? "section-locked" : "section-active"
+          }`}
         >
           <div className="aeq-section-header">
-            <div className={`aeq-section-num ${!sec3Done ? "num-locked" : ""}`}>
-              4
-            </div>
+            <div className={`aeq-section-num ${!sec3Done ? "num-locked" : ""}`}>4</div>
             <h5 className="aeq-section-title">
               Quote{" "}
               {!sec3Done && (
@@ -1280,7 +1209,6 @@ export default function AddEnquiry() {
 
           {sec3Done && (
             <>
-              {/* Quote number preview info */}
               <div className="aeq-qn-info-box">
                 <i className="bi bi-info-circle-fill me-2"></i>
                 Quote number will be auto-generated as&nbsp;
@@ -1289,13 +1217,13 @@ export default function AddEnquiry() {
                   {new Date().toISOString().slice(2, 4)}
                   {new Date().toISOString().slice(5, 7)}
                   {new Date().toISOString().slice(8, 10)}-XXXX-
-                  {(form.ae_name || "XX").slice(0, 2).toUpperCase()}
+                  {(form.ae_name || "XX").slice(-2).toUpperCase()}
                 </strong>
                 &nbsp;upon saving.
               </div>
 
               <div className="aeq-fields-grid">
-                {/* Quote No — frozen, shown on save */}
+                {/* Quote No */}
                 <div className="aeq-field">
                   <label>Quote Number</label>
                   <input
@@ -1306,7 +1234,7 @@ export default function AddEnquiry() {
                   />
                 </div>
 
-                {/* Register Date — today, frozen */}
+                {/* Register Date */}
                 <div className="aeq-field">
                   <label>Register Date</label>
                   <input
@@ -1317,7 +1245,7 @@ export default function AddEnquiry() {
                   />
                 </div>
 
-                {/* Stage — fixed Enquiry */}
+                {/* Stage */}
                 <div className="aeq-field">
                   <label>Stage</label>
                   <input
@@ -1328,7 +1256,7 @@ export default function AddEnquiry() {
                   />
                 </div>
 
-                {/* Quote Submitted Date — frozen */}
+                {/* Quote Submitted Date */}
                 <div className="aeq-field">
                   <label>Quote Submitted Date</label>
                   <input
@@ -1341,21 +1269,15 @@ export default function AddEnquiry() {
 
                 {/* Opportunity Stage */}
                 <div className="aeq-field">
-                  <label>
-                    Opportunity Stage <span className="req">*</span>
-                  </label>
+                  <label>Opportunity Stage <span className="req">*</span></label>
                   <select
                     className={`form-select aeq-input ${errors.opportunity_stage ? "is-invalid" : ""}`}
                     value={form.opportunity_stage}
-                    onChange={(e) =>
-                      handleChange("opportunity_stage", e.target.value)
-                    }
+                    onChange={(e) => handleChange("opportunity_stage", e.target.value)}
                   >
                     <option value="">-- Select Stage --</option>
                     {oppStages.map((s) => (
-                      <option key={s} value={s}>
-                        {s}
-                      </option>
+                      <option key={s} value={s}>{s}</option>
                     ))}
                   </select>
                   {errors.opportunity_stage && (
@@ -1363,7 +1285,7 @@ export default function AddEnquiry() {
                   )}
                 </div>
 
-                {/* Revision — frozen at 0 */}
+                {/* Revision */}
                 <div className="aeq-field">
                   <label>Revision</label>
                   <input
@@ -1376,19 +1298,20 @@ export default function AddEnquiry() {
 
                 {/* Expected Order Date */}
                 <div className="aeq-field">
-                  <label>Expected Order Date</label>
+                  <label>Expected Order Date <span className="req">*</span></label>
                   <input
                     type="date"
-                    className="form-control aeq-input"
+                    className={`form-control aeq-input ${errors.expected_order_date ? "is-invalid" : ""}`}
                     value={form.expected_order_date}
                     min={today()}
-                    onChange={(e) =>
-                      handleChange("expected_order_date", e.target.value)
-                    }
+                    onChange={(e) => handleChange("expected_order_date", e.target.value)}
                   />
+                  {errors.expected_order_date && (
+                    <div className="aeq-error">{errors.expected_order_date}</div>
+                  )}
                 </div>
 
-                {/* Effective Enquiry Date — checkbox to enable */}
+                {/* Effective Enquiry Date */}
                 <div className="aeq-field">
                   <label>
                     Effective Enquiry Date &nbsp;
@@ -1400,7 +1323,7 @@ export default function AddEnquiry() {
                         if (!e.target.checked) handleChange("eff_enq_date", "");
                       }}
                       className="aeq-checkbox"
-                      title="Check to enable effective enquiry date"
+                      title="Check to enable"
                     />
                     <span className="aeq-muted-hint ms-2">Check to enable</span>
                   </label>
@@ -1410,9 +1333,7 @@ export default function AddEnquiry() {
                     value={form.eff_enq_date}
                     min={effEnqMin}
                     max={effEnqMax}
-                    onChange={(e) =>
-                      handleChange("eff_enq_date", e.target.value)
-                    }
+                    onChange={(e) => handleChange("eff_enq_date", e.target.value)}
                     disabled={!effEnqEnabled}
                   />
                   {effEnqEnabled && (
@@ -1424,9 +1345,7 @@ export default function AddEnquiry() {
 
                 {/* Priority */}
                 <div className="aeq-field">
-                  <label>
-                    Priority <span className="req">*</span>
-                  </label>
+                  <label>Priority <span className="req">*</span></label>
                   <select
                     className={`form-select aeq-input ${errors.priority ? "is-invalid" : ""}`}
                     value={form.priority}
@@ -1446,14 +1365,9 @@ export default function AddEnquiry() {
           )}
         </div>
 
-        {/* ═══════════════════════════════════
-            SAVE BUTTON
-        ═══════════════════════════════════ */}
+        {/* Save Bar */}
         <div className="aeq-save-bar">
-          <button
-            className="btn aeq-btn-outline"
-            onClick={() => navigate("/enquiry")}
-          >
+          <button className="btn aeq-btn-outline" onClick={() => navigate("/enquiry")}>
             <i className="bi bi-x-lg me-1"></i>Cancel
           </button>
           <button
