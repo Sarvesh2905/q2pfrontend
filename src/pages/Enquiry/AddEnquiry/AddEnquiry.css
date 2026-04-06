@@ -227,3 +227,28 @@
   .aeq-step-label   { font-size: .65rem; }
   .aeq-save-bar     { padding: 10px 16px; }
 }
+/* ═══════════════════════════════════
+   2×2 Sections Grid (Change 1)
+═══════════════════════════════════ */
+.aeq-sections-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+/* Remove per-section bottom margin since grid gap handles spacing */
+.aeq-sections-grid .aeq-section {
+  margin-bottom: 0;
+}
+
+/* Quote info box variants (Change 3) */
+.aeq-qn-legacy  { background: #fff8e1; border-color: #ffe082; color: #7b4f00; }
+.aeq-qn-regular { background: #e3f2fd; border-color: #90caf9; color: #1565c0; }
+
+/* Collapse to single column on tablet / mobile */
+@media (max-width: 1024px) {
+  .aeq-sections-grid {
+    grid-template-columns: 1fr;
+  }
+}
