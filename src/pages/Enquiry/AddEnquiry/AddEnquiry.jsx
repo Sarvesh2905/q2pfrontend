@@ -8,7 +8,6 @@ import "./AddEnquiry.css";
 /* ── helpers ── */
 const today = () => new Date().toISOString().split("T")[0];
 
-// ✅ FIX 4: Pure client-side working-days calculation — always dynamically fresh
 const addWorkingDays = (startDate, days) => {
   const result = new Date(startDate);
   let added = 0;
@@ -44,7 +43,7 @@ const EMPTY = {
   products: [],
   project_name: "",
   customer_due_date: "",
-  proposed_due_date: getProposedDueDate(), // ✅ FIX 4: Always today+2 working days
+  proposed_due_date: getProposedDueDate(),
   lines_in_rfq: "",
   win_probability: "",
   opportunity_stage: "",
@@ -66,9 +65,7 @@ function ProductImageCard({ pName, imageFile }) {
   useEffect(() => {
     setFailed(false);
   }, [imageFile]);
-
   const imgSrc = imageFile ? `${BASE_URL}/static/images/${imageFile}` : null;
-
   return (
     <div className="aeq-img-card">
       {imgSrc && !failed ? (
@@ -136,7 +133,6 @@ export default function AddEnquiry() {
 
   const [productImages, setProductImages] = useState({});
   const [commentsEnabled, setCommentsEnabled] = useState(false);
-  const [effEnqEnabled, setEffEnqEnabled] = useState(false);
 
   const showMsg = (text, type) => {
     setMessage({ text, type });
@@ -174,15 +170,14 @@ export default function AddEnquiry() {
     fetchAll();
   }, []);
 
-  // ✅ FIX 5: Auto-default opportunity_stage to "Yet To Quote" once stages load
+  /* ── Auto-default opportunity_stage to "Yet To Quote" ── */
   useEffect(() => {
     if (oppStages.length && !form.opportunity_stage) {
       const yetToQuote = oppStages.find(
         (s) => s.toLowerCase() === "yet to quote",
       );
-      if (yetToQuote) {
+      if (yetToQuote)
         setForm((prev) => ({ ...prev, opportunity_stage: yetToQuote }));
-      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [oppStages]);
@@ -269,19 +264,19 @@ export default function AddEnquiry() {
 
   /* ── Product toggle ── */
   const handleProductToggle = (productName, imageFile, checked) => {
-    setForm((prev) => {
-      const updated = checked
+    setForm((prev) => ({
+      ...prev,
+      products: checked
         ? [...prev.products, productName]
-        : prev.products.filter((p) => p !== productName);
-      return { ...prev, products: updated };
-    });
+        : prev.products.filter((p) => p !== productName),
+    }));
     if (checked && imageFile) {
       setProductImages((prev) => ({ ...prev, [productName]: imageFile }));
     } else {
       setProductImages((prev) => {
-        const copy = { ...prev };
-        delete copy[productName];
-        return copy;
+        const c = { ...prev };
+        delete c[productName];
+        return c;
       });
     }
   };
@@ -351,12 +346,8 @@ export default function AddEnquiry() {
     if (!form.customer_due_date) e.customer_due_date = "Required";
     if (!form.proposed_due_date) e.proposed_due_date = "Required";
     if (!form.lines_in_rfq) e.lines_in_rfq = "Required";
-    if (
-      form.lines_in_rfq &&
-      parseInt(form.lines_in_rfq) < form.products.length
-    ) {
+    if (form.lines_in_rfq && parseInt(form.lines_in_rfq) < form.products.length)
       e.lines_in_rfq = `Must be ≥ products selected (${form.products.length})`;
-    }
     if (!form.win_probability) e.win_probability = "Required";
     setErrors((prev) => ({ ...prev, ...e }));
     return Object.keys(e).length === 0;
@@ -375,19 +366,17 @@ export default function AddEnquiry() {
   const confirmSection1 = () => {
     if (!validateSection1()) return;
     setSec1Done(true);
-    showMsg("Customer section confirmed. Fill RFQ details.", "success");
+    showMsg("Customer confirmed. Fill RFQ details.", "success");
   };
-
   const confirmSection2 = () => {
     if (!validateSection2()) return;
     setSec2Done(true);
-    showMsg("RFQ section confirmed. Fill Product details.", "success");
+    showMsg("RFQ confirmed. Fill Product details.", "success");
   };
-
   const confirmSection3 = () => {
     if (!validateSection3()) return;
     setSec3Done(true);
-    showMsg("Product section confirmed. Fill Quote details.", "success");
+    showMsg("Product confirmed. Fill Quote details.", "success");
   };
 
   /* ── Legacy check ── */
@@ -404,22 +393,23 @@ export default function AddEnquiry() {
     if (!validateSection4()) return;
     setSaving(true);
     try {
-      const qnRes = await api.get("/enquiry/generate-quote-no", {
-        params: { ae_name: form.ae_name, is_legacy: isLegacy() },
-      });
-      const quote_number = qnRes.data.data;
-      await api.post("/enquiry/create", {
+      const res = await api.post("/enquiry/create", {
         ...form,
-        quote_number,
+        is_legacy: isLegacy(),
         register_date: today(),
       });
+      const quote_number = res.data.quote_number;
       showMsg(`Enquiry created! Quote No: ${quote_number}`, "success");
       setTimeout(() => navigate("/enquiry"), 2500);
     } catch (err) {
-      showMsg(
-        err.response?.data?.message || "Failed to save enquiry",
-        "danger",
-      );
+      if (err.response?.status === 409) {
+        showMsg("Quote number conflict — please click Save again.", "danger");
+      } else {
+        showMsg(
+          err.response?.data?.message || "Failed to save enquiry",
+          "danger",
+        );
+      }
     } finally {
       setSaving(false);
     }
@@ -427,7 +417,6 @@ export default function AddEnquiry() {
 
   /* ── Reset ── */
   const handleReset = () => {
-    // ✅ FIX 4: Recalculate proposed_due_date fresh on reset
     setForm({ ...EMPTY, proposed_due_date: getProposedDueDate() });
     setErrors({});
     setSec1Done(false);
@@ -437,27 +426,25 @@ export default function AddEnquiry() {
     setProductList([]);
     setProductImages({});
     setCommentsEnabled(false);
-    setEffEnqEnabled(false);
     setShowNewOppType(false);
     setShowNewFactory(false);
     setMessage({ text: "", type: "" });
   };
 
-  const effEnqMin = form.receipt_date || today();
-  const effEnqMax = today();
-
-  // ✅ FIX 3: Quote number preview helpers
+  /* ── Quote number preview ── */
   const legacy = isLegacy();
   const qnPrefix = legacy ? "L" : "R";
   const qnDate = (() => {
     const d = new Date();
-    const yy = String(d.getFullYear()).slice(2);
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yy}${mm}${dd}`;
+    return `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
   })();
-  // ✅ FIX 3: slice(0,2) matches backend (first 2 chars of AE name)
   const qnAe = (form.ae_name || "XX").slice(0, 2).toUpperCase();
+
+  /* ── Lock flags ── */
+  const sec1Locked = false; // Section 1 is never locked
+  const sec2Locked = !sec1Done; // Section 2 locked until sec1 confirmed
+  const sec3Locked = !sec2Done; // Section 3 locked until sec2 confirmed
+  const sec4Locked = !sec3Done; // Section 4 locked until sec3 confirmed
 
   /* ══════════════════════════════════════════════
      RENDER
@@ -500,14 +487,17 @@ export default function AddEnquiry() {
         {/* Progress Bar */}
         <div className="aeq-progress-bar">
           {["Customer", "RFQ", "Product", "Quote"].map((label, i) => {
-            const done = [sec1Done, sec2Done, sec3Done, true][i];
-            const active = [true, sec1Done, sec2Done, sec3Done][i];
+            const done = [sec1Done, sec2Done, sec3Done, false][i];
+            const active = [
+              !sec1Done,
+              sec1Done && !sec2Done,
+              sec2Done && !sec3Done,
+              sec3Done,
+            ][i];
             return (
               <React.Fragment key={label}>
                 <div
-                  className={`aeq-step ${
-                    done ? "step-done" : active ? "step-active" : "step-locked"
-                  }`}
+                  className={`aeq-step ${done ? "step-done" : active ? "step-active" : "step-locked"}`}
                 >
                   <div className="aeq-step-circle">
                     {done ? <i className="bi bi-check-lg"></i> : i + 1}
@@ -516,9 +506,7 @@ export default function AddEnquiry() {
                 </div>
                 {i < 3 && (
                   <div
-                    className={`aeq-step-line ${
-                      [sec1Done, sec2Done, sec3Done][i] ? "line-done" : ""
-                    }`}
+                    className={`aeq-step-line ${[sec1Done, sec2Done, sec3Done][i] ? "line-done" : ""}`}
                   ></div>
                 )}
               </React.Fragment>
@@ -530,25 +518,19 @@ export default function AddEnquiry() {
         {message.text && (
           <div className={`alert alert-${message.type} aeq-alert`}>
             <i
-              className={`bi ${
-                message.type === "success"
-                  ? "bi-check-circle"
-                  : "bi-exclamation-triangle"
-              } me-2`}
+              className={`bi ${message.type === "success" ? "bi-check-circle" : "bi-exclamation-triangle"} me-2`}
             ></i>
             {message.text}
           </div>
         )}
 
-        {/* ✅ FIX 1: 2×2 grid — Customer | RFQ on top, Product | Quote on bottom */}
+        {/* ✅ 2×2 Grid — ALL 4 sections always visible */}
         <div className="aeq-sections-grid">
           {/* ═══════════════════════════════
               SECTION 1 — CUSTOMER
           ═══════════════════════════════ */}
           <div
-            className={`aeq-section ${
-              sec1Done ? "section-done" : "section-active"
-            }`}
+            className={`aeq-section ${sec1Done ? "section-done" : "section-active"}`}
           >
             <div className="aeq-section-header">
               <div className="aeq-section-num">1</div>
@@ -569,7 +551,6 @@ export default function AddEnquiry() {
             </div>
 
             <div className="aeq-fields-grid">
-              {/* Customer Name */}
               <div className="aeq-field">
                 <label>
                   Customer Name <span className="req">*</span>
@@ -592,7 +573,6 @@ export default function AddEnquiry() {
                 )}
               </div>
 
-              {/* Category */}
               <div className="aeq-field">
                 <label>Category</label>
                 <input
@@ -604,7 +584,6 @@ export default function AddEnquiry() {
                 />
               </div>
 
-              {/* Country */}
               <div className="aeq-field">
                 <label>Country</label>
                 <input
@@ -616,7 +595,6 @@ export default function AddEnquiry() {
                 />
               </div>
 
-              {/* Buyer Name */}
               <div className="aeq-field">
                 <label>Buyer Name</label>
                 <select
@@ -634,7 +612,6 @@ export default function AddEnquiry() {
                 </select>
               </div>
 
-              {/* ✅ FIX 2: Group — dropdown with DOMESTIC / EXPORT */}
               <div className="aeq-field">
                 <label>Group</label>
                 <select
@@ -649,7 +626,6 @@ export default function AddEnquiry() {
                 </select>
               </div>
 
-              {/* Currency */}
               <div className="aeq-field">
                 <label>Currency</label>
                 <input
@@ -661,7 +637,6 @@ export default function AddEnquiry() {
                 />
               </div>
 
-              {/* End User Name */}
               <div className="aeq-field">
                 <label>
                   End User Name <span className="req">*</span>
@@ -681,7 +656,6 @@ export default function AddEnquiry() {
                 )}
               </div>
 
-              {/* End Country */}
               <div className="aeq-field">
                 <label>
                   End User Country <span className="req">*</span>
@@ -704,7 +678,6 @@ export default function AddEnquiry() {
                 )}
               </div>
 
-              {/* End Industry */}
               <div className="aeq-field">
                 <label>
                   End Industry <span className="req">*</span>
@@ -727,7 +700,6 @@ export default function AddEnquiry() {
                 )}
               </div>
 
-              {/* Industry Description */}
               <div className="aeq-field aeq-field-full">
                 <label>Industry Description</label>
                 <input
@@ -755,25 +727,20 @@ export default function AddEnquiry() {
 
           {/* ═══════════════════════════════
               SECTION 2 — RFQ
+              ✅ Always rendered — locked via CSS when sec2Locked
           ═══════════════════════════════ */}
           <div
-            className={`aeq-section ${
-              !sec1Done
-                ? "section-locked"
-                : sec2Done
-                  ? "section-done"
-                  : "section-active"
-            }`}
+            className={`aeq-section ${sec2Locked ? "section-locked" : sec2Done ? "section-done" : "section-active"}`}
           >
             <div className="aeq-section-header">
               <div
-                className={`aeq-section-num ${!sec1Done ? "num-locked" : ""}`}
+                className={`aeq-section-num ${sec2Locked ? "num-locked" : ""}`}
               >
                 2
               </div>
               <h5 className="aeq-section-title">
-                RFQ{" "}
-                {!sec1Done && (
+                RFQ
+                {sec2Locked && (
                   <span className="aeq-lock-hint">
                     <i className="bi bi-lock-fill"></i> Complete Customer first
                   </span>
@@ -797,256 +764,238 @@ export default function AddEnquiry() {
               )}
             </div>
 
-            {sec1Done && (
-              <>
-                <div className="aeq-fields-grid">
-                  {/* Receipt Date */}
-                  <div className="aeq-field">
-                    <label>
-                      Receipt Date <span className="req">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className={`form-control aeq-input ${errors.receipt_date ? "is-invalid" : ""}`}
-                      value={form.receipt_date}
-                      max={today()}
-                      onChange={(e) => handleReceiptDateChange(e.target.value)}
-                      disabled={sec2Done}
-                    />
-                    {errors.receipt_date && (
-                      <div className="aeq-error">{errors.receipt_date}</div>
-                    )}
-                  </div>
+            {/* ✅ Fields always visible — disabled when locked */}
+            <div className="aeq-fields-grid">
+              <div className="aeq-field">
+                <label>
+                  Receipt Date <span className="req">*</span>
+                </label>
+                <input
+                  type="date"
+                  className={`form-control aeq-input ${errors.receipt_date ? "is-invalid" : ""}`}
+                  value={form.receipt_date}
+                  max={today()}
+                  onChange={(e) => handleReceiptDateChange(e.target.value)}
+                  disabled={sec2Locked || sec2Done}
+                />
+                {errors.receipt_date && (
+                  <div className="aeq-error">{errors.receipt_date}</div>
+                )}
+              </div>
 
-                  {/* App Engineer */}
-                  <div className="aeq-field">
-                    <label>
-                      Application Engineer <span className="req">*</span>
-                    </label>
-                    <select
-                      className={`form-select aeq-input ${errors.ae_name ? "is-invalid" : ""}`}
-                      value={form.ae_name}
-                      onChange={(e) => handleChange("ae_name", e.target.value)}
-                      disabled={sec2Done}
+              <div className="aeq-field">
+                <label>
+                  Application Engineer <span className="req">*</span>
+                </label>
+                <select
+                  className={`form-select aeq-input ${errors.ae_name ? "is-invalid" : ""}`}
+                  value={form.ae_name}
+                  onChange={(e) => handleChange("ae_name", e.target.value)}
+                  disabled={sec2Locked || sec2Done}
+                >
+                  <option value="">-- Select AE --</option>
+                  {aeList.map((ae) => (
+                    <option key={ae} value={ae}>
+                      {ae}
+                    </option>
+                  ))}
+                </select>
+                {errors.ae_name && (
+                  <div className="aeq-error">{errors.ae_name}</div>
+                )}
+              </div>
+
+              <div className="aeq-field">
+                <label>
+                  Sales Contact <span className="req">*</span>
+                </label>
+                <select
+                  className={`form-select aeq-input ${errors.sales_contact ? "is-invalid" : ""}`}
+                  value={form.sales_contact}
+                  onChange={(e) =>
+                    handleChange("sales_contact", e.target.value)
+                  }
+                  disabled={sec2Locked || sec2Done}
+                >
+                  <option value="">-- Select Sales Contact --</option>
+                  {salesList.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                {errors.sales_contact && (
+                  <div className="aeq-error">{errors.sales_contact}</div>
+                )}
+              </div>
+
+              <div className="aeq-field">
+                <label>
+                  Opportunity Type <span className="req">*</span>
+                </label>
+                <div className="aeq-inline-add">
+                  <select
+                    className={`form-select aeq-input ${errors.opportunity_type ? "is-invalid" : ""}`}
+                    value={form.opportunity_type}
+                    onChange={(e) =>
+                      handleChange("opportunity_type", e.target.value)
+                    }
+                    disabled={sec2Locked || sec2Done}
+                  >
+                    <option value="">-- Select Type --</option>
+                    {oppTypes.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                  {!sec2Locked && !sec2Done && (
+                    <button
+                      type="button"
+                      className="btn aeq-btn-add-inline"
+                      title="Add new"
+                      onClick={() => setShowNewOppType((p) => !p)}
                     >
-                      <option value="">-- Select AE --</option>
-                      {aeList.map((ae) => (
-                        <option key={ae} value={ae}>
-                          {ae}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.ae_name && (
-                      <div className="aeq-error">{errors.ae_name}</div>
-                    )}
-                  </div>
-
-                  {/* Sales Contact */}
-                  <div className="aeq-field">
-                    <label>
-                      Sales Contact <span className="req">*</span>
-                    </label>
-                    <select
-                      className={`form-select aeq-input ${errors.sales_contact ? "is-invalid" : ""}`}
-                      value={form.sales_contact}
-                      onChange={(e) =>
-                        handleChange("sales_contact", e.target.value)
-                      }
-                      disabled={sec2Done}
-                    >
-                      <option value="">-- Select Sales Contact --</option>
-                      {salesList.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.sales_contact && (
-                      <div className="aeq-error">{errors.sales_contact}</div>
-                    )}
-                  </div>
-
-                  {/* Opportunity Type */}
-                  <div className="aeq-field">
-                    <label>
-                      Opportunity Type <span className="req">*</span>
-                    </label>
-                    <div className="aeq-inline-add">
-                      <select
-                        className={`form-select aeq-input ${errors.opportunity_type ? "is-invalid" : ""}`}
-                        value={form.opportunity_type}
-                        onChange={(e) =>
-                          handleChange("opportunity_type", e.target.value)
-                        }
-                        disabled={sec2Done}
-                      >
-                        <option value="">-- Select Type --</option>
-                        {oppTypes.map((o) => (
-                          <option key={o} value={o}>
-                            {o}
-                          </option>
-                        ))}
-                      </select>
-                      {!sec2Done && (
-                        <button
-                          type="button"
-                          className="btn aeq-btn-add-inline"
-                          title="Add new opportunity type"
-                          onClick={() => setShowNewOppType((p) => !p)}
-                        >
-                          <i className="bi bi-plus-lg"></i>
-                        </button>
-                      )}
-                    </div>
-                    {errors.opportunity_type && (
-                      <div className="aeq-error">{errors.opportunity_type}</div>
-                    )}
-                    {showNewOppType && !sec2Done && (
-                      <div className="aeq-dynamic-add mt-2">
-                        <input
-                          type="text"
-                          className="form-control aeq-input"
-                          placeholder="New opportunity type..."
-                          value={newOppType}
-                          onChange={(e) => setNewOppType(e.target.value)}
-                        />
-                        <button
-                          className="btn aeq-btn-confirm-sm"
-                          onClick={handleAddOppType}
-                        >
-                          Add
-                        </button>
-                        <button
-                          className="btn aeq-btn-cancel-sm"
-                          onClick={() => {
-                            setShowNewOppType(false);
-                            setNewOppType("");
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* RFQ Category */}
-                  <div className="aeq-field">
-                    <label>
-                      Category <span className="req">*</span>
-                    </label>
-                    <select
-                      className={`form-select aeq-input ${errors.rfq_category ? "is-invalid" : ""}`}
-                      value={form.rfq_category}
-                      onChange={(e) =>
-                        handleChange("rfq_category", e.target.value)
-                      }
-                      disabled={sec2Done}
-                    >
-                      <option value="">-- Select Category --</option>
-                      {rfqCats.map((r) => (
-                        <option key={r} value={r}>
-                          {r}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.rfq_category && (
-                      <div className="aeq-error">{errors.rfq_category}</div>
-                    )}
-                  </div>
-
-                  {/* RFQ Reference */}
-                  <div className="aeq-field">
-                    <label>
-                      RFQ Reference <span className="req">*</span>
-                    </label>
+                      <i className="bi bi-plus-lg"></i>
+                    </button>
+                  )}
+                </div>
+                {errors.opportunity_type && (
+                  <div className="aeq-error">{errors.opportunity_type}</div>
+                )}
+                {showNewOppType && !sec2Locked && !sec2Done && (
+                  <div className="aeq-dynamic-add mt-2">
                     <input
                       type="text"
-                      className={`form-control aeq-input ${errors.rfq_reference ? "is-invalid" : ""}`}
-                      value={form.rfq_reference}
-                      onChange={(e) =>
-                        handleChange("rfq_reference", e.target.value)
-                      }
-                      placeholder="Enter RFQ reference"
-                      disabled={sec2Done}
-                      maxLength={250}
+                      className="form-control aeq-input"
+                      placeholder="New opportunity type..."
+                      value={newOppType}
+                      onChange={(e) => setNewOppType(e.target.value)}
                     />
-                    {errors.rfq_reference && (
-                      <div className="aeq-error">{errors.rfq_reference}</div>
-                    )}
-                  </div>
-
-                  {/* Comments */}
-                  <div className="aeq-field aeq-field-full">
-                    <label>
-                      Register Date Comments
-                      {commentsEnabled && <span className="req"> *</span>}
-                      {commentsEnabled ? (
-                        <span className="aeq-warn-hint ms-2">
-                          <i className="bi bi-exclamation-triangle-fill me-1"></i>
-                          Receipt date is beyond 4 working days — comment
-                          required
-                        </span>
-                      ) : (
-                        <span className="aeq-muted-hint ms-2">
-                          Enabled only if receipt date &gt; 4 working days past
-                        </span>
-                      )}
-                    </label>
-                    <textarea
-                      className={`form-control aeq-input ${errors.comments ? "is-invalid" : ""}`}
-                      rows={2}
-                      value={form.comments}
-                      onChange={(e) => handleChange("comments", e.target.value)}
-                      placeholder={
-                        commentsEnabled
-                          ? "Enter reason for late registration..."
-                          : "Your comments here (disabled)"
-                      }
-                      disabled={!commentsEnabled || sec2Done}
-                      maxLength={250}
-                    />
-                    {errors.comments && (
-                      <div className="aeq-error">{errors.comments}</div>
-                    )}
-                  </div>
-                </div>
-
-                {!sec2Done && (
-                  <div className="aeq-section-footer">
                     <button
-                      className="btn aeq-btn-confirm"
-                      onClick={confirmSection2}
+                      className="btn aeq-btn-confirm-sm"
+                      onClick={handleAddOppType}
                     >
-                      <i className="bi bi-check-lg me-1"></i>Confirm RFQ &amp;
-                      Proceed to Product
+                      Add
+                    </button>
+                    <button
+                      className="btn aeq-btn-cancel-sm"
+                      onClick={() => {
+                        setShowNewOppType(false);
+                        setNewOppType("");
+                      }}
+                    >
+                      Cancel
                     </button>
                   </div>
                 )}
-              </>
+              </div>
+
+              <div className="aeq-field">
+                <label>
+                  Category <span className="req">*</span>
+                </label>
+                <select
+                  className={`form-select aeq-input ${errors.rfq_category ? "is-invalid" : ""}`}
+                  value={form.rfq_category}
+                  onChange={(e) => handleChange("rfq_category", e.target.value)}
+                  disabled={sec2Locked || sec2Done}
+                >
+                  <option value="">-- Select Category --</option>
+                  {rfqCats.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+                {errors.rfq_category && (
+                  <div className="aeq-error">{errors.rfq_category}</div>
+                )}
+              </div>
+
+              <div className="aeq-field">
+                <label>
+                  RFQ Reference <span className="req">*</span>
+                </label>
+                <input
+                  type="text"
+                  className={`form-control aeq-input ${errors.rfq_reference ? "is-invalid" : ""}`}
+                  value={form.rfq_reference}
+                  onChange={(e) =>
+                    handleChange("rfq_reference", e.target.value)
+                  }
+                  placeholder="Enter RFQ reference"
+                  disabled={sec2Locked || sec2Done}
+                  maxLength={250}
+                />
+                {errors.rfq_reference && (
+                  <div className="aeq-error">{errors.rfq_reference}</div>
+                )}
+              </div>
+
+              <div className="aeq-field aeq-field-full">
+                <label>
+                  Register Date Comments
+                  {commentsEnabled && <span className="req"> *</span>}
+                  {commentsEnabled ? (
+                    <span className="aeq-warn-hint ms-2">
+                      <i className="bi bi-exclamation-triangle-fill me-1"></i>
+                      Receipt date &gt; 4 working days — comment required
+                    </span>
+                  ) : (
+                    <span className="aeq-muted-hint ms-2">
+                      Enabled only if receipt date &gt; 4 working days past
+                    </span>
+                  )}
+                </label>
+                <textarea
+                  className={`form-control aeq-input ${errors.comments ? "is-invalid" : ""}`}
+                  rows={2}
+                  value={form.comments}
+                  onChange={(e) => handleChange("comments", e.target.value)}
+                  placeholder={
+                    commentsEnabled
+                      ? "Enter reason for late registration..."
+                      : "Disabled"
+                  }
+                  disabled={sec2Locked || !commentsEnabled || sec2Done}
+                  maxLength={250}
+                />
+                {errors.comments && (
+                  <div className="aeq-error">{errors.comments}</div>
+                )}
+              </div>
+            </div>
+
+            {!sec2Locked && !sec2Done && (
+              <div className="aeq-section-footer">
+                <button
+                  className="btn aeq-btn-confirm"
+                  onClick={confirmSection2}
+                >
+                  <i className="bi bi-check-lg me-1"></i>Confirm RFQ &amp;
+                  Proceed to Product
+                </button>
+              </div>
             )}
           </div>
 
           {/* ═══════════════════════════════
               SECTION 3 — PRODUCT
+              ✅ Always rendered — locked via CSS when sec3Locked
           ═══════════════════════════════ */}
           <div
-            className={`aeq-section ${
-              !sec2Done
-                ? "section-locked"
-                : sec3Done
-                  ? "section-done"
-                  : "section-active"
-            }`}
+            className={`aeq-section ${sec3Locked ? "section-locked" : sec3Done ? "section-done" : "section-active"}`}
           >
             <div className="aeq-section-header">
               <div
-                className={`aeq-section-num ${!sec2Done ? "num-locked" : ""}`}
+                className={`aeq-section-num ${sec3Locked ? "num-locked" : ""}`}
               >
                 3
               </div>
               <h5 className="aeq-section-title">
-                Product{" "}
-                {!sec2Done && (
+                Product
+                {sec3Locked && (
                   <span className="aeq-lock-hint">
                     <i className="bi bi-lock-fill"></i> Complete RFQ first
                   </span>
@@ -1067,303 +1016,281 @@ export default function AddEnquiry() {
               )}
             </div>
 
-            {sec2Done && (
-              <>
-                <div className="aeq-product-layout">
-                  {/* Left — Fields */}
-                  <div className="aeq-product-fields">
-                    <div className="aeq-fields-grid">
-                      {/* Facing Factory */}
-                      <div className="aeq-field aeq-field-full">
-                        <label>
-                          Facing Factory <span className="req">*</span>
-                        </label>
-                        <div className="aeq-inline-add">
-                          <select
-                            className={`form-select aeq-input ${errors.facing_factory ? "is-invalid" : ""}`}
-                            value={form.facing_factory}
-                            onChange={(e) =>
-                              handleFactoryChange(e.target.value)
-                            }
-                            disabled={sec3Done}
-                          >
-                            <option value="">-- Select Factory --</option>
-                            {factories.map((f) => (
-                              <option key={f} value={f}>
-                                {f}
-                              </option>
-                            ))}
-                          </select>
-                          {!sec3Done && (
-                            <button
-                              type="button"
-                              className="btn aeq-btn-add-inline"
-                              title="Add new facing factory"
-                              onClick={() => setShowNewFactory((p) => !p)}
-                            >
-                              <i className="bi bi-plus-lg"></i>
-                            </button>
-                          )}
-                        </div>
-                        {errors.facing_factory && (
-                          <div className="aeq-error">
-                            {errors.facing_factory}
-                          </div>
-                        )}
-                        {showNewFactory && !sec3Done && (
-                          <div className="aeq-dynamic-add mt-2">
-                            <input
-                              type="text"
-                              className="form-control aeq-input"
-                              placeholder="New facing factory..."
-                              value={newFactory}
-                              onChange={(e) => setNewFactory(e.target.value)}
-                            />
-                            <button
-                              className="btn aeq-btn-confirm-sm"
-                              onClick={handleAddFactory}
-                            >
-                              Add
-                            </button>
-                            <button
-                              className="btn aeq-btn-cancel-sm"
-                              onClick={() => {
-                                setShowNewFactory(false);
-                                setNewFactory("");
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Products */}
-                      <div className="aeq-field aeq-field-full">
-                        <label>
-                          Product <span className="req">*</span>
-                        </label>
-                        {!form.facing_factory ? (
-                          <p className="aeq-muted-hint">
-                            Select a Facing Factory first
-                          </p>
-                        ) : productList.length === 0 ? (
-                          <p className="aeq-muted-hint">
-                            No products found for this factory
-                          </p>
-                        ) : (
-                          <div className="aeq-product-checklist">
-                            {productList.map((p) => (
-                              <label
-                                key={p.Products}
-                                className={`aeq-product-check-item ${
-                                  form.products.includes(p.Products)
-                                    ? "checked"
-                                    : ""
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={form.products.includes(p.Products)}
-                                  onChange={(e) =>
-                                    handleProductToggle(
-                                      p.Products,
-                                      p.Image,
-                                      e.target.checked,
-                                    )
-                                  }
-                                  disabled={sec3Done}
-                                />
-                                <span className="aeq-product-name">
-                                  {p.Products}
-                                </span>
-                                {p.Prd_group?.toLowerCase() === "legacy" && (
-                                  <span className="aeq-legacy-tag">Legacy</span>
-                                )}
-                              </label>
-                            ))}
-                          </div>
-                        )}
-                        {errors.products && (
-                          <div className="aeq-error">{errors.products}</div>
-                        )}
-                      </div>
-
-                      {/* Project Name */}
-                      <div className="aeq-field aeq-field-full">
-                        <label>
-                          Project Name <span className="req">*</span>
-                        </label>
+            {/* ✅ Fields always visible */}
+            <div className="aeq-product-layout">
+              <div className="aeq-product-fields">
+                <div className="aeq-fields-grid">
+                  <div className="aeq-field aeq-field-full">
+                    <label>
+                      Facing Factory <span className="req">*</span>
+                    </label>
+                    <div className="aeq-inline-add">
+                      <select
+                        className={`form-select aeq-input ${errors.facing_factory ? "is-invalid" : ""}`}
+                        value={form.facing_factory}
+                        onChange={(e) => handleFactoryChange(e.target.value)}
+                        disabled={sec3Locked || sec3Done}
+                      >
+                        <option value="">-- Select Factory --</option>
+                        {factories.map((f) => (
+                          <option key={f} value={f}>
+                            {f}
+                          </option>
+                        ))}
+                      </select>
+                      {!sec3Locked && !sec3Done && (
+                        <button
+                          type="button"
+                          className="btn aeq-btn-add-inline"
+                          title="Add new"
+                          onClick={() => setShowNewFactory((p) => !p)}
+                        >
+                          <i className="bi bi-plus-lg"></i>
+                        </button>
+                      )}
+                    </div>
+                    {errors.facing_factory && (
+                      <div className="aeq-error">{errors.facing_factory}</div>
+                    )}
+                    {showNewFactory && !sec3Locked && !sec3Done && (
+                      <div className="aeq-dynamic-add mt-2">
                         <input
                           type="text"
-                          className={`form-control aeq-input ${errors.project_name ? "is-invalid" : ""}`}
-                          value={form.project_name}
-                          onChange={(e) =>
-                            handleChange("project_name", e.target.value)
-                          }
-                          placeholder="Enter project name"
-                          disabled={sec3Done}
-                          maxLength={75}
+                          className="form-control aeq-input"
+                          placeholder="New facing factory..."
+                          value={newFactory}
+                          onChange={(e) => setNewFactory(e.target.value)}
                         />
-                        {errors.project_name && (
-                          <div className="aeq-error">{errors.project_name}</div>
-                        )}
-                      </div>
-
-                      {/* Customer Due Date */}
-                      <div className="aeq-field">
-                        <label>
-                          Customer Due Date <span className="req">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          className={`form-control aeq-input ${errors.customer_due_date ? "is-invalid" : ""}`}
-                          value={form.customer_due_date}
-                          min={today()}
-                          onChange={(e) =>
-                            handleChange("customer_due_date", e.target.value)
-                          }
-                          disabled={sec3Done}
-                        />
-                        {errors.customer_due_date && (
-                          <div className="aeq-error">
-                            {errors.customer_due_date}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* ✅ FIX 4: Proposed Due Date — always dynamically computed */}
-                      <div className="aeq-field">
-                        <label>
-                          Proposed Due Date <span className="req">*</span>
-                        </label>
-                        <input
-                          type="date"
-                          className={`form-control aeq-input ${errors.proposed_due_date ? "is-invalid" : ""}`}
-                          value={form.proposed_due_date}
-                          min={today()}
-                          onChange={(e) =>
-                            handleChange("proposed_due_date", e.target.value)
-                          }
-                          disabled={sec3Done}
-                        />
-                        <small className="text-muted">
-                          Auto-set to today + 2 working days (editable)
-                        </small>
-                        {errors.proposed_due_date && (
-                          <div className="aeq-error">
-                            {errors.proposed_due_date}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Lines in RFQ */}
-                      <div className="aeq-field">
-                        <label>
-                          Lines in RFQ <span className="req">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          className={`form-control aeq-input ${errors.lines_in_rfq ? "is-invalid" : ""}`}
-                          value={form.lines_in_rfq}
-                          onChange={(e) =>
-                            handleChange(
-                              "lines_in_rfq",
-                              e.target.value.replace(/\D/g, ""),
-                            )
-                          }
-                          placeholder="Number of line items"
-                          disabled={sec3Done}
-                        />
-                        {errors.lines_in_rfq && (
-                          <div className="aeq-error">{errors.lines_in_rfq}</div>
-                        )}
-                      </div>
-
-                      {/* Winning Probability */}
-                      <div className="aeq-field">
-                        <label>
-                          Winning Probability <span className="req">*</span>
-                        </label>
-                        <select
-                          className={`form-select aeq-input ${errors.win_probability ? "is-invalid" : ""}`}
-                          value={form.win_probability}
-                          onChange={(e) =>
-                            handleChange("win_probability", e.target.value)
-                          }
-                          disabled={sec3Done}
+                        <button
+                          className="btn aeq-btn-confirm-sm"
+                          onClick={handleAddFactory}
                         >
-                          <option value="">-- Select --</option>
-                          <option value="Low">Low</option>
-                          <option value="Medium">Medium</option>
-                          <option value="High">High</option>
-                        </select>
-                        {errors.win_probability && (
-                          <div className="aeq-error">
-                            {errors.win_probability}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right — Product Images */}
-                  <div className="aeq-product-images">
-                    <p className="aeq-img-panel-title">
-                      <i className="bi bi-images me-1"></i>Selected Products
-                    </p>
-                    {form.products.length === 0 ? (
-                      <div className="aeq-img-placeholder">
-                        <i className="bi bi-box-seam"></i>
-                        <p>No products selected</p>
-                      </div>
-                    ) : (
-                      <div className="aeq-img-grid">
-                        {form.products.map((pName) => (
-                          <ProductImageCard
-                            key={pName}
-                            pName={pName}
-                            imageFile={productImages[pName]}
-                          />
-                        ))}
+                          Add
+                        </button>
+                        <button
+                          className="btn aeq-btn-cancel-sm"
+                          onClick={() => {
+                            setShowNewFactory(false);
+                            setNewFactory("");
+                          }}
+                        >
+                          Cancel
+                        </button>
                       </div>
                     )}
                   </div>
-                </div>
 
-                {!sec3Done && (
-                  <div className="aeq-section-footer">
-                    <button
-                      className="btn aeq-btn-confirm"
-                      onClick={confirmSection3}
+                  <div className="aeq-field aeq-field-full">
+                    <label>
+                      Product <span className="req">*</span>
+                    </label>
+                    {!form.facing_factory ? (
+                      <p className="aeq-muted-hint">
+                        Select a Facing Factory first
+                      </p>
+                    ) : productList.length === 0 ? (
+                      <p className="aeq-muted-hint">
+                        No products found for this factory
+                      </p>
+                    ) : (
+                      <div className="aeq-product-checklist">
+                        {productList.map((p) => (
+                          <label
+                            key={p.Products}
+                            className={`aeq-product-check-item ${form.products.includes(p.Products) ? "checked" : ""}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={form.products.includes(p.Products)}
+                              onChange={(e) =>
+                                handleProductToggle(
+                                  p.Products,
+                                  p.Image,
+                                  e.target.checked,
+                                )
+                              }
+                              disabled={sec3Locked || sec3Done}
+                            />
+                            <span className="aeq-product-name">
+                              {p.Products}
+                            </span>
+                            {p.Prd_group?.toLowerCase() === "legacy" && (
+                              <span className="aeq-legacy-tag">Legacy</span>
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                    {errors.products && (
+                      <div className="aeq-error">{errors.products}</div>
+                    )}
+                  </div>
+
+                  <div className="aeq-field aeq-field-full">
+                    <label>
+                      Project Name <span className="req">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className={`form-control aeq-input ${errors.project_name ? "is-invalid" : ""}`}
+                      value={form.project_name}
+                      onChange={(e) =>
+                        handleChange("project_name", e.target.value)
+                      }
+                      placeholder="Enter project name"
+                      disabled={sec3Locked || sec3Done}
+                      maxLength={75}
+                    />
+                    {errors.project_name && (
+                      <div className="aeq-error">{errors.project_name}</div>
+                    )}
+                  </div>
+
+                  <div className="aeq-field">
+                    <label>
+                      Customer Due Date <span className="req">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className={`form-control aeq-input ${errors.customer_due_date ? "is-invalid" : ""}`}
+                      value={form.customer_due_date}
+                      min={today()}
+                      onChange={(e) =>
+                        handleChange("customer_due_date", e.target.value)
+                      }
+                      disabled={sec3Locked || sec3Done}
+                    />
+                    {errors.customer_due_date && (
+                      <div className="aeq-error">
+                        {errors.customer_due_date}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="aeq-field">
+                    <label>
+                      Proposed Due Date <span className="req">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      className={`form-control aeq-input ${errors.proposed_due_date ? "is-invalid" : ""}`}
+                      value={form.proposed_due_date}
+                      min={today()}
+                      onChange={(e) =>
+                        handleChange("proposed_due_date", e.target.value)
+                      }
+                      disabled={sec3Locked || sec3Done}
+                    />
+                    <small className="text-muted">
+                      Auto-set to today + 2 working days (editable)
+                    </small>
+                    {errors.proposed_due_date && (
+                      <div className="aeq-error">
+                        {errors.proposed_due_date}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="aeq-field">
+                    <label>
+                      Lines in RFQ <span className="req">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      className={`form-control aeq-input ${errors.lines_in_rfq ? "is-invalid" : ""}`}
+                      value={form.lines_in_rfq}
+                      onChange={(e) =>
+                        handleChange(
+                          "lines_in_rfq",
+                          e.target.value.replace(/\D/g, ""),
+                        )
+                      }
+                      placeholder="Number of line items"
+                      disabled={sec3Locked || sec3Done}
+                    />
+                    {errors.lines_in_rfq && (
+                      <div className="aeq-error">{errors.lines_in_rfq}</div>
+                    )}
+                  </div>
+
+                  <div className="aeq-field">
+                    <label>
+                      Winning Probability <span className="req">*</span>
+                    </label>
+                    <select
+                      className={`form-select aeq-input ${errors.win_probability ? "is-invalid" : ""}`}
+                      value={form.win_probability}
+                      onChange={(e) =>
+                        handleChange("win_probability", e.target.value)
+                      }
+                      disabled={sec3Locked || sec3Done}
                     >
-                      <i className="bi bi-check-lg me-1"></i>Confirm Product
-                      &amp; Proceed to Quote
-                    </button>
+                      <option value="">-- Select --</option>
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                    </select>
+                    {errors.win_probability && (
+                      <div className="aeq-error">{errors.win_probability}</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Product Images panel */}
+              <div className="aeq-product-images">
+                <p className="aeq-img-panel-title">
+                  <i className="bi bi-images me-1"></i>Selected Products
+                </p>
+                {form.products.length === 0 ? (
+                  <div className="aeq-img-placeholder">
+                    <i className="bi bi-box-seam"></i>
+                    <p>No products selected</p>
+                  </div>
+                ) : (
+                  <div className="aeq-img-grid">
+                    {form.products.map((pName) => (
+                      <ProductImageCard
+                        key={pName}
+                        pName={pName}
+                        imageFile={productImages[pName]}
+                      />
+                    ))}
                   </div>
                 )}
-              </>
+              </div>
+            </div>
+
+            {!sec3Locked && !sec3Done && (
+              <div className="aeq-section-footer">
+                <button
+                  className="btn aeq-btn-confirm"
+                  onClick={confirmSection3}
+                >
+                  <i className="bi bi-check-lg me-1"></i>Confirm Product &amp;
+                  Proceed to Quote
+                </button>
+              </div>
             )}
           </div>
 
           {/* ═══════════════════════════════
               SECTION 4 — QUOTE
+              ✅ Always rendered — locked via CSS when sec4Locked
           ═══════════════════════════════ */}
           <div
-            className={`aeq-section ${
-              !sec3Done ? "section-locked" : "section-active"
-            }`}
+            className={`aeq-section ${sec4Locked ? "section-locked" : "section-active"}`}
           >
             <div className="aeq-section-header">
               <div
-                className={`aeq-section-num ${!sec3Done ? "num-locked" : ""}`}
+                className={`aeq-section-num ${sec4Locked ? "num-locked" : ""}`}
               >
                 4
               </div>
               <h5 className="aeq-section-title">
-                Quote{" "}
-                {!sec3Done && (
+                Quote
+                {sec4Locked && (
                   <span className="aeq-lock-hint">
                     <i className="bi bi-lock-fill"></i> Complete Product first
                   </span>
@@ -1371,228 +1298,181 @@ export default function AddEnquiry() {
               </h5>
             </div>
 
-            {sec3Done && (
-              <>
-                {/* ✅ FIX 3: Clear Legacy / Regular label in info box */}
-                <div
-                  className={`aeq-qn-info-box ${legacy ? "aeq-qn-legacy" : "aeq-qn-regular"}`}
+            {/* ✅ Fields always visible */}
+            <div
+              className={`aeq-qn-info-box ${legacy ? "aeq-qn-legacy" : "aeq-qn-regular"}`}
+            >
+              <i className="bi bi-info-circle-fill me-2"></i>
+              {legacy ? (
+                <>
+                  <strong>Legacy</strong> product — Quote number auto-generated
+                  as{" "}
+                  <strong>
+                    {qnPrefix}
+                    {qnDate}-XXXX-{qnAe}
+                  </strong>{" "}
+                  upon saving.
+                </>
+              ) : (
+                <>
+                  <strong>Regular</strong> product — Quote number auto-generated
+                  as{" "}
+                  <strong>
+                    {qnPrefix}
+                    {qnDate}-XXXX-{qnAe}
+                  </strong>{" "}
+                  upon saving.
+                </>
+              )}
+            </div>
+
+            <div className="aeq-fields-grid">
+              <div className="aeq-field">
+                <label>Quote Number</label>
+                <input
+                  type="text"
+                  className="form-control aeq-input aeq-readonly"
+                  value="Auto-generated on Save"
+                  readOnly
+                />
+              </div>
+
+              <div className="aeq-field">
+                <label>Register Date</label>
+                <input
+                  type="text"
+                  className="form-control aeq-input aeq-readonly"
+                  value={today()}
+                  readOnly
+                />
+              </div>
+
+              <div className="aeq-field">
+                <label>Stage</label>
+                <input
+                  type="text"
+                  className="form-control aeq-input aeq-readonly"
+                  value="Enquiry"
+                  readOnly
+                />
+              </div>
+
+              <div className="aeq-field">
+                <label>Revision</label>
+                <input
+                  type="text"
+                  className="form-control aeq-input aeq-readonly"
+                  value="0"
+                  readOnly
+                />
+              </div>
+
+              <div className="aeq-field">
+                <label>
+                  Opportunity Stage <span className="req">*</span>
+                </label>
+                <select
+                  className={`form-select aeq-input ${errors.opportunity_stage ? "is-invalid" : ""}`}
+                  value={form.opportunity_stage}
+                  onChange={(e) =>
+                    handleChange("opportunity_stage", e.target.value)
+                  }
+                  disabled={sec4Locked}
                 >
-                  <i className="bi bi-info-circle-fill me-2"></i>
-                  {legacy ? (
-                    <>
-                      <strong>Legacy</strong> product selected — Quote number
-                      will be auto-generated as&nbsp;
-                      <strong>
-                        {qnPrefix}
-                        {qnDate}-XXXX-{qnAe}
-                      </strong>
-                      &nbsp;upon saving.
-                    </>
-                  ) : (
-                    <>
-                      <strong>Regular</strong> product — Quote number will be
-                      auto-generated as&nbsp;
-                      <strong>
-                        {qnPrefix}
-                        {qnDate}-XXXX-{qnAe}
-                      </strong>
-                      &nbsp;upon saving.
-                    </>
-                  )}
-                </div>
+                  <option value="">-- Select Stage --</option>
+                  {oppStages.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                {errors.opportunity_stage && (
+                  <div className="aeq-error">{errors.opportunity_stage}</div>
+                )}
+              </div>
 
-                <div className="aeq-fields-grid">
-                  {/* Quote No */}
-                  <div className="aeq-field">
-                    <label>Quote Number</label>
-                    <input
-                      type="text"
-                      className="form-control aeq-input aeq-readonly"
-                      value="Auto-generated on Save"
-                      readOnly
-                    />
-                  </div>
+              <div className="aeq-field">
+                <label>
+                  Expected Order Date <span className="req">*</span>
+                </label>
+                <input
+                  type="date"
+                  className={`form-control aeq-input ${errors.expected_order_date ? "is-invalid" : ""}`}
+                  value={form.expected_order_date}
+                  min={today()}
+                  onChange={(e) =>
+                    handleChange("expected_order_date", e.target.value)
+                  }
+                  disabled={sec4Locked}
+                />
+                {errors.expected_order_date && (
+                  <div className="aeq-error">{errors.expected_order_date}</div>
+                )}
+              </div>
 
-                  {/* Register Date */}
-                  <div className="aeq-field">
-                    <label>Register Date</label>
-                    <input
-                      type="text"
-                      className="form-control aeq-input aeq-readonly"
-                      value={today()}
-                      readOnly
-                    />
-                  </div>
+              <div className="aeq-field">
+                <label>
+                  Effective Enquiry Date
+                  <span className="aeq-muted-hint ms-2">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  className="form-control aeq-input"
+                  value={form.eff_enq_date}
+                  min={form.receipt_date || today()}
+                  max={today()}
+                  onChange={(e) => handleChange("eff_enq_date", e.target.value)}
+                  disabled={sec4Locked}
+                />
+              </div>
 
-                  {/* Stage */}
-                  <div className="aeq-field">
-                    <label>Stage</label>
-                    <input
-                      type="text"
-                      className="form-control aeq-input aeq-readonly"
-                      value="Enquiry"
-                      readOnly
-                    />
-                  </div>
+              <div className="aeq-field">
+                <label>
+                  Priority <span className="req">*</span>
+                </label>
+                <select
+                  className={`form-select aeq-input ${errors.priority ? "is-invalid" : ""}`}
+                  value={form.priority}
+                  onChange={(e) => handleChange("priority", e.target.value)}
+                  disabled={sec4Locked}
+                >
+                  <option value="">-- Select Priority --</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+                {errors.priority && (
+                  <div className="aeq-error">{errors.priority}</div>
+                )}
+              </div>
+            </div>
 
-                  {/* Quote Submitted Date */}
-                  <div className="aeq-field">
-                    <label>Quote Submitted Date</label>
-                    <input
-                      type="text"
-                      className="form-control aeq-input aeq-readonly"
-                      value="— (Not applicable at creation)"
-                      readOnly
-                    />
-                  </div>
-
-                  {/* ✅ FIX 5: Opportunity Stage — auto-defaulted to "Yet to Quote" */}
-                  <div className="aeq-field">
-                    <label>
-                      Opportunity Stage <span className="req">*</span>
-                    </label>
-                    <select
-                      className={`form-select aeq-input ${errors.opportunity_stage ? "is-invalid" : ""}`}
-                      value={form.opportunity_stage}
-                      onChange={(e) =>
-                        handleChange("opportunity_stage", e.target.value)
-                      }
-                    >
-                      <option value="">-- Select Stage --</option>
-                      {oppStages.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.opportunity_stage && (
-                      <div className="aeq-error">
-                        {errors.opportunity_stage}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Revision */}
-                  <div className="aeq-field">
-                    <label>Revision</label>
-                    <input
-                      type="text"
-                      className="form-control aeq-input aeq-readonly"
-                      value="0"
-                      readOnly
-                    />
-                  </div>
-
-                  {/* Expected Order Date */}
-                  <div className="aeq-field">
-                    <label>
-                      Expected Order Date <span className="req">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      className={`form-control aeq-input ${errors.expected_order_date ? "is-invalid" : ""}`}
-                      value={form.expected_order_date}
-                      min={today()}
-                      onChange={(e) =>
-                        handleChange("expected_order_date", e.target.value)
-                      }
-                    />
-                    {errors.expected_order_date && (
-                      <div className="aeq-error">
-                        {errors.expected_order_date}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Effective Enquiry Date */}
-                  <div className="aeq-field">
-                    <label>
-                      Effective Enquiry Date &nbsp;
-                      <input
-                        type="checkbox"
-                        checked={effEnqEnabled}
-                        onChange={(e) => {
-                          setEffEnqEnabled(e.target.checked);
-                          if (!e.target.checked)
-                            handleChange("eff_enq_date", "");
-                        }}
-                        className="aeq-checkbox"
-                        title="Check to enable"
-                      />
-                      <span className="aeq-muted-hint ms-2">
-                        Check to enable
-                      </span>
-                    </label>
-                    <input
-                      type="date"
-                      className="form-control aeq-input"
-                      value={form.eff_enq_date}
-                      min={effEnqMin}
-                      max={effEnqMax}
-                      onChange={(e) =>
-                        handleChange("eff_enq_date", e.target.value)
-                      }
-                      disabled={!effEnqEnabled}
-                    />
-                    {effEnqEnabled && (
-                      <small className="text-muted">
-                        Range: {effEnqMin} to {effEnqMax}
-                      </small>
-                    )}
-                  </div>
-
-                  {/* Priority */}
-                  <div className="aeq-field">
-                    <label>
-                      Priority <span className="req">*</span>
-                    </label>
-                    <select
-                      className={`form-select aeq-input ${errors.priority ? "is-invalid" : ""}`}
-                      value={form.priority}
-                      onChange={(e) => handleChange("priority", e.target.value)}
-                    >
-                      <option value="">-- Select Priority --</option>
-                      <option value="Low">Low</option>
-                      <option value="Medium">Medium</option>
-                      <option value="High">High</option>
-                    </select>
-                    {errors.priority && (
-                      <div className="aeq-error">{errors.priority}</div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
+            <div className="aeq-section-footer">
+              <button
+                className="btn aeq-btn-save"
+                onClick={handleSave}
+                disabled={sec4Locked || saving}
+              >
+                {saving ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm me-2"
+                      role="status"
+                    ></span>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-floppy-fill me-2"></i>Save Enquiry
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
         {/* end aeq-sections-grid */}
-
-        {/* Save Bar */}
-        <div className="aeq-save-bar">
-          <button
-            className="btn aeq-btn-outline"
-            onClick={() => navigate("/enquiry")}
-          >
-            <i className="bi bi-x-lg me-1"></i>Cancel
-          </button>
-          <button
-            className="btn aeq-btn-save"
-            onClick={handleSave}
-            disabled={!sec3Done || saving}
-          >
-            {saving ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Saving...
-              </>
-            ) : (
-              <>
-                <i className="bi bi-save-fill me-2"></i>Save Enquiry
-              </>
-            )}
-          </button>
-        </div>
       </div>
+      {/* end aeq-body */}
     </div>
   );
 }
