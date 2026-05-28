@@ -19,7 +19,7 @@
   box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
   padding: 44px 40px;
   width: 100%;
-  max-width: 430px;
+  max-width: 520px;
   border-top: 4px solid #8B0000;
 }
 
@@ -46,12 +46,29 @@
   margin-bottom: 28px;
 }
 
+/* ── Inline label + input row ── */
+.q2p-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .q2p-label {
-  display: block;
+  flex: 0 0 130px;
   font-weight: 600;
   color: #5c0000;
   font-size: 0.88rem;
-  margin-bottom: 5px;
+  margin: 0;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.q2p-field-row > .form-control,
+.q2p-field-row > .form-select,
+.q2p-field-row > .input-group {
+  flex: 1;
+  min-width: 0;
 }
 
 .q2p-input:focus {
@@ -98,6 +115,7 @@
 }
 .eye-btn:hover { color: #8B0000; background: #f5efef; }
 
-@media (max-width: 480px) {
-  .login-card { padding: 28px 18px; }
+@media (max-width: 540px) {
+  .login-card { padding: 28px 16px; }
+  .q2p-label { flex: 0 0 100px; font-size: 0.8rem; }
 }

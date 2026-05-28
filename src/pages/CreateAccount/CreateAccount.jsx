@@ -8,12 +8,10 @@ const CreateAccount = () => {
   const navigate = useNavigate();
   const [sites, setSites] = useState([]);
 
-  // Step flags
   const [otpSent, setOtpSent] = useState(false);
   const [verifyLocked, setVerifyLocked] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
 
-  // Field values
   const [username, setUsername] = useState("");
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
@@ -24,11 +22,9 @@ const CreateAccount = () => {
   const [employeeId, setEmployeeId] = useState("");
   const [role, setRole] = useState("");
 
-  // Eye toggles
   const [showPwd, setShowPwd] = useState(false);
   const [showCPwd, setShowCPwd] = useState(false);
 
-  // Messages
   const [emailMsg, setEmailMsg] = useState({ text: "", type: "" });
   const [otpMsg, setOtpMsg] = useState({ text: "", type: "" });
   const [formError, setFormError] = useState("");
@@ -43,7 +39,6 @@ const CreateAccount = () => {
       .catch(() => setSites([{ site_name: "Coimbatore" }]));
   }, []);
 
-  // Step 1 — Verify email exists + send OTP
   const handleVerifyEmail = async () => {
     if (!username) {
       setEmailMsg({ text: "Please enter your email", type: "danger" });
@@ -80,7 +75,6 @@ const CreateAccount = () => {
     }
   };
 
-  // Step 2 — Verify OTP
   const handleVerifyOTP = async () => {
     if (!otp || otp.length !== 6) {
       setOtpMsg({ text: "Enter the 6-digit OTP", type: "danger" });
@@ -99,7 +93,6 @@ const CreateAccount = () => {
     }
   };
 
-  // Step 3 — Submit form
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!otpVerified) {
@@ -169,7 +162,7 @@ const CreateAccount = () => {
 
           <form onSubmit={handleSubmit} noValidate>
             {/* USERNAME */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 Username (Email) <span className="req">*</span>
               </label>
@@ -210,49 +203,61 @@ const CreateAccount = () => {
                   )}
                 </button>
               </div>
-              {emailMsg.text && (
-                <small className={`text-${emailMsg.type} d-block mt-1`}>
+            </div>
+            {emailMsg.text && (
+              <div
+                style={{
+                  paddingLeft: "152px",
+                  marginTop: "-8px",
+                  marginBottom: "10px",
+                }}
+              >
+                <small className={`text-${emailMsg.type}`}>
                   <i
                     className={`bi me-1 ${emailMsg.type === "success" ? "bi-check-circle" : "bi-exclamation-circle"}`}
                   ></i>
                   {emailMsg.text}
                 </small>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* OTP FIELD */}
             {otpSent && !otpVerified && (
-              <div className="mb-3 otp-box">
-                <label className="q2p-label">
-                  Enter OTP <span className="req">*</span>
-                </label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control q2p-input text-center fw-bold otp-input"
-                    placeholder="● ● ● ● ● ●"
-                    value={otp}
-                    onChange={(e) => {
-                      setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
-                      setOtpMsg({ text: "", type: "" });
-                    }}
-                    maxLength={6}
-                  />
-                  <button
-                    type="button"
-                    className="btn q2p-btn-primary"
-                    onClick={handleVerifyOTP}
-                  >
-                    Verify OTP
-                  </button>
+              <div className="otp-box">
+                <div className="q2p-field-row" style={{ marginBottom: 0 }}>
+                  <label className="q2p-label">
+                    Enter OTP <span className="req">*</span>
+                  </label>
+                  <div className="input-group">
+                    <input
+                      type="text"
+                      className="form-control q2p-input text-center fw-bold otp-input"
+                      placeholder="● ● ● ● ● ●"
+                      value={otp}
+                      onChange={(e) => {
+                        setOtp(e.target.value.replace(/\D/g, "").slice(0, 6));
+                        setOtpMsg({ text: "", type: "" });
+                      }}
+                      maxLength={6}
+                    />
+                    <button
+                      type="button"
+                      className="btn q2p-btn-primary"
+                      onClick={handleVerifyOTP}
+                    >
+                      Verify OTP
+                    </button>
+                  </div>
                 </div>
                 {otpMsg.text && (
-                  <small className={`text-${otpMsg.type} d-block mt-1`}>
-                    <i
-                      className={`bi me-1 ${otpMsg.type === "success" ? "bi-check-circle" : "bi-x-circle"}`}
-                    ></i>
-                    {otpMsg.text}
-                  </small>
+                  <div style={{ paddingLeft: "152px", marginTop: "6px" }}>
+                    <small className={`text-${otpMsg.type}`}>
+                      <i
+                        className={`bi me-1 ${otpMsg.type === "success" ? "bi-check-circle" : "bi-x-circle"}`}
+                      ></i>
+                      {otpMsg.text}
+                    </small>
+                  </div>
                 )}
               </div>
             )}
@@ -265,7 +270,7 @@ const CreateAccount = () => {
             )}
 
             {/* PASSWORD */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 Password <span className="req">*</span>
               </label>
@@ -294,9 +299,9 @@ const CreateAccount = () => {
             </div>
 
             {/* CONFIRM PASSWORD */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
-                Confirm Password <span className="req">*</span>
+                Confirm Pwd <span className="req">*</span>
               </label>
               <div className="input-group">
                 <input
@@ -320,15 +325,23 @@ const CreateAccount = () => {
                   ></i>
                 </button>
               </div>
-              {password && confirmPwd && password !== confirmPwd && (
-                <small className="text-danger d-block mt-1">
+            </div>
+            {password && confirmPwd && password !== confirmPwd && (
+              <div
+                style={{
+                  paddingLeft: "152px",
+                  marginTop: "-8px",
+                  marginBottom: "10px",
+                }}
+              >
+                <small className="text-danger">
                   <i className="bi bi-x-circle me-1"></i>Passwords do not match
                 </small>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* SITE */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 Site <span className="req">*</span>
               </label>
@@ -349,7 +362,7 @@ const CreateAccount = () => {
             </div>
 
             {/* FIRST NAME */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 First Name <span className="req">*</span>
               </label>
@@ -365,7 +378,7 @@ const CreateAccount = () => {
             </div>
 
             {/* LAST NAME */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 Last Name <span className="req">*</span>
               </label>
@@ -381,14 +394,14 @@ const CreateAccount = () => {
             </div>
 
             {/* EMPLOYEE ID */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">
                 Employee ID <span className="req">*</span>
               </label>
               <input
                 type="text"
                 className="form-control q2p-input"
-                placeholder="Enter your Employee ID (must be unique)"
+                placeholder="Enter your Employee ID"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
                 disabled={locked}
@@ -396,21 +409,23 @@ const CreateAccount = () => {
               />
             </div>
 
-            {/* EMAIL — auto filled, read-only */}
-            <div className="mb-3">
+            {/* EMAIL — auto filled */}
+            <div className="q2p-field-row">
               <label className="q2p-label">Email</label>
-              <input
-                type="email"
-                className="form-control auto-email"
-                value={username}
-                readOnly
-                tabIndex={-1}
-              />
-              <small className="text-muted">Auto-filled from Username</small>
+              <div style={{ flex: 1 }}>
+                <input
+                  type="email"
+                  className="form-control auto-email"
+                  value={username}
+                  readOnly
+                  tabIndex={-1}
+                />
+                <small className="text-muted">Auto-filled from Username</small>
+              </div>
             </div>
 
             {/* ROLE */}
-            <div className="mb-4">
+            <div className="q2p-field-row" style={{ marginBottom: "20px" }}>
               <label className="q2p-label">
                 Role <span className="req">*</span>
               </label>
@@ -436,7 +451,6 @@ const CreateAccount = () => {
               </div>
             )}
 
-            {/* SUBMIT BUTTONS */}
             <div className="d-flex gap-2">
               <button
                 type="submit"

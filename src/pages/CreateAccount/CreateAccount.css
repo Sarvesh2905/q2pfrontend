@@ -18,7 +18,7 @@
   box-shadow: 0 12px 40px rgba(139, 0, 0, 0.15);
   padding: 40px 38px;
   width: 100%;
-  max-width: 500px;
+  max-width: 580px;
   border-top: 4px solid #8B0000;
   height: fit-content;
 }
@@ -83,13 +83,29 @@
   color: #aaa;
 }
 
-/* Labels & inputs */
+/* ── Inline label + input row ── */
+.q2p-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
 .q2p-label {
-  display: block;
+  flex: 0 0 140px;
   font-weight: 600;
   color: #5c0000;
   font-size: 0.88rem;
-  margin-bottom: 5px;
+  margin: 0;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.q2p-field-row > .form-control,
+.q2p-field-row > .form-select,
+.q2p-field-row > .input-group {
+  flex: 1;
+  min-width: 0;
 }
 
 .req { color: #c0392b; }
@@ -120,6 +136,7 @@
   border: 1.5px dashed #8B0000;
   border-radius: 10px;
   padding: 14px 14px 10px;
+  margin-bottom: 14px;
 }
 
 .otp-input {
@@ -162,6 +179,7 @@
 }
 .eye-btn:hover:not(:disabled) { color: #8B0000; background: #f5efef; }
 
-@media (max-width: 480px) {
-  .ca-card { padding: 24px 16px; }
+@media (max-width: 520px) {
+  .ca-card { padding: 24px 14px; }
+  .q2p-label { flex: 0 0 110px; font-size: 0.8rem; }
 }

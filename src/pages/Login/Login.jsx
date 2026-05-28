@@ -19,7 +19,6 @@ const Login = () => {
   const navigate = useNavigate();
   const { user, login } = useAuth();
 
-  // Already logged in → push to dashboard (can't come back to login)
   useEffect(() => {
     if (user) navigate("/dashboard", { replace: true });
   }, [user, navigate]);
@@ -53,7 +52,6 @@ const Login = () => {
         Last_name: res.data.Last_name,
         site: res.data.site,
       });
-      // replace:true → browser back button won't return to login
       navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(
@@ -77,7 +75,10 @@ const Login = () => {
           <p className="login-subtitle">Q2P System — Production</p>
 
           {error && (
-            <div className="alert alert-danger py-2 text-center" role="alert">
+            <div
+              className="alert alert-danger py-2 text-center mb-3"
+              role="alert"
+            >
               <i className="bi bi-exclamation-circle me-2"></i>
               {error}
             </div>
@@ -85,7 +86,7 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} noValidate>
             {/* Username */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">Username</label>
               <input
                 type="text"
@@ -100,7 +101,7 @@ const Login = () => {
             </div>
 
             {/* Password */}
-            <div className="mb-3">
+            <div className="q2p-field-row">
               <label className="q2p-label">Password</label>
               <div className="input-group">
                 <input
@@ -127,7 +128,7 @@ const Login = () => {
             </div>
 
             {/* Site */}
-            <div className="mb-4">
+            <div className="q2p-field-row" style={{ marginBottom: "24px" }}>
               <label className="q2p-label">Site</label>
               <select
                 className="form-select q2p-input"
